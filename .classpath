@@ -29,5 +29,6 @@
 	<classpathentry kind="lib" path="lib/test/commons-compress-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/test/plexus-classworlds-2.2.2.jar"/>
 	<classpathentry kind="lib" path="lib/test/postgis-jdbc-1.3.3.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/protobuf.jar"/>
 	<classpathentry kind="output" path="eclipse"/>
 </classpath>
