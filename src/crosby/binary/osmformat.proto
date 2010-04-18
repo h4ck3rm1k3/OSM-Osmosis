@@ -1,0 +1,135 @@
+option java_package = "crosby.binary";
+
+//protoc --java_out=../.. osmformat.proto
+
+/* OSM Binary file format 
+
+Intended to support extensions and allow extensions to append
+additional data to the file, such as indexes.
+
+We do not support removing blocks of data from a file.
+
+Fileformat is layered to two levels. A 'storage' layer and a file layer.
+
+*/
+
+//
+//  UTILS: Storing a large literal value.
+//
+
+/* Represents a compressed blob. The field indicates and demultiplexes the
+format. */
+
+message BBox {
+   required sfixed32 min_lon = 1;
+   required sfixed32 min_lat = 2;
+   required sint64 delta_lon = 3;
+   required sint64 delta_lat = 4;
+}
+
+//
+//  STORAGE LAYER: Storing primitives.
+//
+
+message StringTable {
+   repeated bytes s = 1;
+}
+
+/* Metadata Included into each primitive. */
+message Info {
+   optional int32 version = 2 [default = -1];
+   optional int32 timestamp = 3;
+   optional int32 uid = 4;
+   optional int32 user_sid = 5;
+   optional int64 changeset = 6;
+}
+
+message ChangeSet {
+   required int64 id = 1;
+   optional Info info = 5;
+   required fixed32 created_at = 7;
+   optional uint32 closetime_delta = 8; // Delta encoded with respect to created_at
+   required bool open = 9;
+   optional BBox bbox = 10;
+   repeated uint32 keys = 11 [packed = true];
+   repeated uint32 vals = 12 [packed = true];
+}
+
+
+message Node {
+   required sint64 id = 1; // Delta coded between nodes in a group.
+   required sint64 lat = 7; // Delta coding lat&lon saves about 3-5% w/full raft of metadata
+   required sint64 lon = 8;
+   repeated uint32 keys = 9 [packed = true];
+   repeated uint32 vals = 10 [packed = true];
+   optional uint64 changesetid = 12;
+   optional Info info = 11;
+}
+
+message DenseNodes {
+   repeated sint64 id = 1; // DELTA coded
+   repeated sint64 lat = 7 [packed = true]; // DELTA coded
+   repeated sint64 lon = 8 [packed = true]; // DELTA coded
+   repeated sint64 changeset_id = 11 [packed = true]; // DELTA coded.
+   repeated Info info = 12;
+}
+
+
+message Way {
+   required int64 id = 1;
+   optional Info info = 7;
+   repeated sint64 refs = 8 [packed = true] ;  // DELTA encoded
+
+   repeated uint32 keys = 9 [packed = true];
+   repeated uint32 vals = 10 [packed = true];
+   optional uint64 changeset_id = 12;
+}
+
+
+message Relation {
+  enum MemberType {
+    NODE = 0;
+    WAY = 1;
+    RELATION = 2;
+  } 
+   required int64 id = 1;
+   optional Info info = 7;
+   // Parallel arrays
+   repeated int32 roles_sid = 8 [packed = true];
+   repeated sint64 memids = 9 [packed = true]; // DELTA encoded
+   repeated MemberType types = 10 [packed = true];
+
+   // Parallel arrays.
+   repeated uint32 keys = 11 [packed = true];
+   repeated uint32 vals = 12 [packed = true];
+
+   optional uint64 changeset_id = 13;
+}
+
+// Group of OSMPrimitives. All primitives in a group must be the same type.
+message PrimitiveGroup {
+  optional DenseNodes dense = 7; // FIX: Should be optional.
+  repeated Node     nodes = 3;
+  repeated Way      ways = 4;
+  repeated Relation relations = 5;
+  repeated ChangeSet changesets = 6;
+}
+
+
+message PrimitiveBlock {
+  required StringTable stringtable = 1;
+  // One of these is included.
+  repeated PrimitiveGroup primitivegroup = 2;
+
+  optional int32 granularity = 17 [default=100]; 
+
+  /* Lat&lon are
+  measured in units of granularity equal to 1 nanodegrees. The default
+  100 corresponds to about 1cm on the ground, and a full lat or lon fits 
+  into 32 bits. */
+
+
+  // Optional extensions, also included in index data.
+  optional BBox bbox = 100;
+}
+

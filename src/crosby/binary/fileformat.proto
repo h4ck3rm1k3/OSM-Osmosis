@@ -1,0 +1,53 @@
+option java_package = "crosby.binary";
+//protoc --java_out=../.. fileformat.proto
+
+
+//
+//  STORAGE LAYER: Storing primitives.
+//
+
+message Blob {
+  optional bytes raw = 1; // No compression
+  optional bytes zlib_data = 2;
+  optional bytes lzma_data = 3;
+  optional bytes bzip2_data = 4;
+}
+
+
+/* Optimization to let an application find any of its fileblocks
+without scanning the entire file. It can add fields to this message,
+which always occurs at the end of a file, to indicate the offsets of
+those fileblocks.
+
+When an app wishes to append its own data to the file, it must copy
+this message out, preserving unknown fields, append its data, then
+re-append this message with any added fields, and update the header
+with the offset.
+
+To support rebuilding a missing filedirectory, an app MUST be able to
+find its data in the file without using the filedirectory.  */
+
+message FileDirectory {
+}
+
+
+/* Header for the entire file, also prefixed with its length. */
+message FileHeader {
+   required fixed32 version = 1;
+   required fixed32 unused = 2;
+   required fixed64 FileDirectory =3;   // Offset of filedirectory.
+}
+
+
+
+
+/* A file contains an sequence of fileblock headers, each prefixed by
+their length, followed by a data block containing the actual data. */
+
+message FileBlockHeader {
+  required string type = 1;
+  optional bytes indexdata = 2;
+  required int32 datasize = 3;
+}
+
+
