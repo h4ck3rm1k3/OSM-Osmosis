@@ -89,6 +89,9 @@ import org.openstreetmap.osmosis.core.xml.v0_6.XmlDownloaderFactory;
 import org.openstreetmap.osmosis.core.xml.v0_6.XmlReaderFactory;
 import org.openstreetmap.osmosis.core.xml.v0_6.XmlWriterFactory;
 
+import crosby.binary.osmosis.OsmosisReaderFactory;
+import crosby.binary.osmosis.OsmosisSerializerFactory;
+
 
 /**
  * Provides the initialisation logic for registering all task factories.
@@ -162,6 +165,7 @@ public class TaskRegistrar {
 		factoryRegister.register("derive-change", new ChangeDeriverFactory());
 		factoryRegister.register("dc", new ChangeDeriverFactory());
 		factoryRegister.register("read-xml", new XmlReaderFactory());
+		factoryRegister.register("write-bin", new OsmosisReaderFactory());
 		factoryRegister.register("fast-read-xml", new FastXmlReaderFactory());
 		factoryRegister.register("rx", new XmlReaderFactory());
         factoryRegister.register("read-xml-change",  new XmlChangeReaderFactory());
@@ -172,6 +176,7 @@ public class TaskRegistrar {
 		factoryRegister.register("sort-change", changeSorterFactory06);
 		factoryRegister.register("sc", changeSorterFactory06);
 		factoryRegister.register("write-xml", new XmlWriterFactory());
+		factoryRegister.register("write-bin", new OsmosisSerializerFactory());
 		factoryRegister.register("wx", new XmlWriterFactory());
 		factoryRegister.register("write-xml-change", new XmlChangeWriterFactory());
 		factoryRegister.register("wxc", new XmlChangeWriterFactory());
