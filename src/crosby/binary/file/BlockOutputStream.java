@@ -15,7 +15,7 @@ public class BlockOutputStream {
 	}
 	
 	public void write(FileBlock block) throws IOException {
-		block.writeTo(outwrite,FileBlock.CompressFlags.NONE);
+		block.writeTo(outwrite,FileBlock.CompressFlags.DEFLATE);
 		writtenblocks.add(block);
 	}
 

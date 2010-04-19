@@ -60,7 +60,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		// TODO: Later make this adaptor abstract so that skipBlock can be overridden.
 		@Override
 		public boolean skipBlock(FileBlock block) {
-			System.out.println("Seeing block of type: "+block.getType());
+			//System.out.println("Seeing block of type: "+block.getType());
 			if (block.getType().equals("OSMData"))
 				return false;
 			if (block.getType().equals("OSMHeader"))

@@ -3,6 +3,9 @@ package crosby.binary.file;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import com.google.protobuf.ByteString;
@@ -26,8 +29,8 @@ public class FileBlock {
 		/** Called with the data in the block */
 		void handleBlock(FileBlock message);
 	}
-	
-	
+
+
 	/** Identifies the type of the data within a block */
 	public final String type;
 	/** Contains the contents of a block for use or further processing */
@@ -46,10 +49,28 @@ public class FileBlock {
 		return new FileBlock(type,blob,indexdata);
 
 	}
-	
-	enum CompressFlags {NONE,
-		                DEFLATE};
-	
+
+	enum CompressFlags {NONE, DEFLATE};
+
+	protected void deflateInto(crosby.binary.Fileformat.Blob.Builder blobbuilder) {
+		int size = data.size();
+		Deflater deflater = new Deflater();
+		deflater.setInput(data.toByteArray());
+		deflater.finish();
+		byte out[] = new byte[size];
+		deflater.deflate(out);
+
+		if (!deflater.finished()) {
+			// Buffer wasn't long enough. Be noisy.
+			System.out.println("Compressed buffer too short causing extra copy");
+			out = Arrays.copyOf(out, size+size/64+16);
+			deflater.deflate(out, deflater.getTotalOut(), out.length-deflater.getTotalOut());
+			assert(deflater.finished());
+		}
+		ByteString compressed = ByteString.copyFrom(out,0,deflater.getTotalOut());
+		blobbuilder.setZlibData(compressed);	
+		deflater.end();
+	}
 	public void writeTo(DataOutputStream outwrite, CompressFlags flags) throws IOException {
 		Fileformat.FileBlockHeader.Builder builder = Fileformat.FileBlockHeader.newBuilder();
 		if (indexdata != null)
@@ -60,24 +81,28 @@ public class FileBlock {
 		if (flags == CompressFlags.NONE) {
 			blobbuilder.setRaw(data);
 		} else {
-			assert false : "TODO"; // TODO
-		}
+			blobbuilder.setRawSize(data.size());
+			if (flags == CompressFlags.DEFLATE)
+				deflateInto(blobbuilder);
+			else
+				assert false : "TODO"; // TODO
+		}	
 		Fileformat.Blob blob = blobbuilder.build();
-		
+
 		builder.setDatasize(blob.getSerializedSize());
 		Fileformat.FileBlockHeader message = builder.build();
-        int size = message.getSerializedSize();
+		int size = message.getSerializedSize();
 
-        //System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
-        //		size,message.getSerializedSize(),blob.getSerializedSize());
-        outwrite.writeInt(size);
-        message.writeTo(outwrite); 		
-        blob.writeTo(outwrite);
+		//System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
+		//		size,message.getSerializedSize(),blob.getSerializedSize());
+		outwrite.writeInt(size);
+		message.writeTo(outwrite); 		
+		blob.writeTo(outwrite);
 
-        // No longer store the blob, just the metadata.
-        blob = null;
-        // TODO: Track the locations of the blocks so that I can 
-        // also store an inbox block at the end.
+		// No longer store the blob, just the metadata.
+		blob = null;
+		// TODO: Track the locations of the blocks so that I can 
+		// also store an inbox block at the end.
 	}
 
 	/** Reads or skips a fileblock. */
@@ -105,18 +130,26 @@ public class FileBlock {
 			if (blob.hasRaw()) {
 				fileblock.data = blob.getRaw();
 			}
-			else //if (blob.hasZlibData()) {
-				assert false; // TODO: Decompress.
-				/*Inflater decompresser = new Inflater();
+			else if (blob.hasZlibData()) {
+				byte out[] = new byte[blob.getRawSize()];
+				Inflater decompresser = new Inflater();
 				 decompresser.setInput(blob.getZlibData().toByteArray());
+				 //decompresser.getRemaining();
+				 try {
+					decompresser.inflate(out);
+				} catch (DataFormatException e) {
+					e.printStackTrace();
+					throw new Error(e);
+				}
+				 assert (decompresser.finished());
 				 decompresser.end();
-				 decompresser.inflate(b)
-				 */
-				 
-				//return new FileBlock(header.getType(),blob,header.getIndexdata());
-		callback.handleBlock(fileblock);
+				 fileblock.data = ByteString.copyFrom(out);
+			}			 
+
+			//return new FileBlock(header.getType(),blob,header.getIndexdata());
+			callback.handleBlock(fileblock);
 		}
-		
+
 	}
 
 	public ByteString getData() {

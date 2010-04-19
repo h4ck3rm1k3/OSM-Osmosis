@@ -8,9 +8,10 @@ option java_package = "crosby.binary";
 
 message Blob {
   optional bytes raw = 1; // No compression
-  optional bytes zlib_data = 2;
-  optional bytes lzma_data = 3;
-  optional bytes bzip2_data = 4;
+  optional int32 raw_size = 2; // When compressed, the uncompressed size
+  optional bytes zlib_data = 3;
+  optional bytes lzma_data = 4;
+  optional bytes bzip2_data = 5;
 }
 
 
