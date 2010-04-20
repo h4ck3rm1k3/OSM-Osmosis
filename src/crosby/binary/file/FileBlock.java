@@ -28,6 +28,7 @@ public class FileBlock {
 		boolean skipBlock(FileBlock message);
 		/** Called with the data in the block */
 		void handleBlock(FileBlock message);
+		void complete();
 	}
 
 
@@ -100,7 +101,7 @@ public class FileBlock {
 		blob.writeTo(outwrite);
 
 		// No longer store the blob, just the metadata.
-		blob = null;
+		this.data = null;
 		// TODO: Track the locations of the blocks so that I can 
 		// also store an inbox block at the end.
 	}

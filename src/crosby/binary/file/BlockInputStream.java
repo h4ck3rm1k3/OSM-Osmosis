@@ -19,6 +19,7 @@ public class BlockInputStream {
 		while (input.available() > 0) {
 			FileBlock.process(input,adaptor);
 		}
+		adaptor.complete();
 	}
 
 

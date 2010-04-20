@@ -68,9 +68,19 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			System.out.println("Skipped block of type: "+block.getType());
 			return true;
 		}
-		
 
-	static OsmUser getUser(Osmformat.Info info,String strings[]) {
+		public void complete() {
+			sink.complete();
+			sink.release();
+		}
+		
+	// Per-block state for parsing, set when processing the header of a block;
+	int granularity;
+	int date_granularity;
+	String strings[];
+		
+		
+	OsmUser getUser(Osmformat.Info info) {
 		//System.out.println(info);
 		if (info.hasUid() && info.hasUserSid())
 			return new OsmUser(info.getUid(),strings[(int) info.getUserSid()]);
@@ -78,11 +88,10 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			return OsmUser.NONE;
 	}
 
-	public static final long DATE_GRANULARITY = 1000;
-	static Date getDate(Osmformat.Info info) {
-		if (info.hasTimestamp()) 
-			return new Date(DATE_GRANULARITY*info.getTimestamp());
-		else
+	Date getDate(Osmformat.Info info) {
+		if (info.hasTimestamp()) {
+			return new Date(date_granularity*(long)info.getTimestamp());
+		} else
 			return NODATE;
 	}
 
@@ -90,7 +99,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 	final int NOCHANGESET = -1;
 	static Date NODATE = new Date();
 	
-	public void parseDense(Osmformat.DenseNodes nodes, String strings[], int granularity) {
+	public void parseDense(Osmformat.DenseNodes nodes) {
 		double multiplier = granularity*.000000001;
 
 		long last_id = 0, last_lat = 0, last_lon = 0;
@@ -103,7 +112,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			double latf = lat*multiplier, lonf = lon*multiplier;
 			if (nodes.getInfoCount()>0) {
 				Osmformat.Info info = nodes.getInfo(i);
-				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info,strings),
+				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,latf,lonf);
 			} else if (nodes.getChangesetIdCount() > 0) {
 				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
@@ -116,7 +125,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		}
 	}
 	
-	public void parseNodes(List<Osmformat.Node> nodes, String strings[], int granularity) {
+	public void parseNodes(List<Osmformat.Node> nodes) {
 		double multiplier = granularity*.000000001;
 		for (Osmformat.Node i : nodes) {
 			List<Tag> tags = new ArrayList<Tag>();
@@ -133,7 +142,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			
 			if (i.hasInfo()) {
 				Osmformat.Info info = i.getInfo();
-				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info,strings),
+				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,latf,lonf);
 			} else if (i.hasChangesetid()) {
 				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
@@ -146,7 +155,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 
 		}
 	}
-	public void parseWays(List<Osmformat.Way> ways, String strings[]) {
+	public void parseWays(List<Osmformat.Way> ways) {
 		for (Osmformat.Way i : ways) {
 			List<Tag> tags = new ArrayList<Tag>();
 			for (int j=0 ; j < i.getKeysCount(); j++)
@@ -167,7 +176,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			Way tmp;
 			if (i.hasInfo()) {
 				Osmformat.Info info = i.getInfo();
-				tmp = new Way(id, info.getVersion(), getDate(info), getUser(info,strings),
+				tmp = new Way(id, info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,
 						nodes);
 			} else if (i.hasChangesetId()) {
@@ -182,7 +191,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			sink.process(new WayContainer(tmp));
 		}
 	}
-	public void parseRelations(List<Osmformat.Relation> rels, String strings[]) {
+	public void parseRelations(List<Osmformat.Relation> rels) {
 		for (Osmformat.Relation i : rels) {
 			List<Tag> tags = new ArrayList<Tag>();
 			for (int j=0 ; j < i.getKeysCount(); j++)
@@ -215,7 +224,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 			Relation tmp;
 			if (i.hasInfo()) {
 				Osmformat.Info info = i.getInfo();
-				tmp = new Relation(id, info.getVersion(), getDate(info), getUser(info,strings),
+				tmp = new Relation(id, info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,
 						nodes);
 			} else if (i.hasChangesetId()) {
@@ -244,19 +253,22 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 	
 	public void parse(Osmformat.PrimitiveBlock block) {
 		Osmformat.StringTable stablemessage = block.getStringtable();
-		String strings[]=new String[stablemessage.getSCount()];
+		strings=new String[stablemessage.getSCount()];
 
 		for (int i=0 ; i < strings.length ; i++) {
 			strings[i]=stablemessage.getS(i).toStringUtf8();
 		}
+
+		granularity = block.getGranularity();
+		date_granularity = block.getDateGranularity();
 		
 		for (Osmformat.PrimitiveGroup groupmessage : block.getPrimitivegroupList()) {
-			// Exactly one of these should trigger.
-			parseNodes(groupmessage.getNodesList(),strings,block.getGranularity());
-			parseWays(groupmessage.getWaysList(),strings);
-			parseRelations(groupmessage.getRelationsList(),strings);
+			// Exactly one of these should trigger on each loop.
+			parseNodes(groupmessage.getNodesList());
+			parseWays(groupmessage.getWaysList());
+			parseRelations(groupmessage.getRelationsList());
 			if (groupmessage.hasDense()) 
-				parseDense(groupmessage.getDense(),strings,block.getGranularity());
+				parseDense(groupmessage.getDense());
 		}
 	}
 		

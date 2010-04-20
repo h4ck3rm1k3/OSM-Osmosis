@@ -32,23 +32,30 @@ public class BinarySerializer {
 		this.granularity = granularity;
 	}
 
-	public void configOmit(boolean omit_all_metadata) {
-		
+	public void configOmit(boolean omit_all_metadata,boolean omit_metadata) {
+		if (omit_all_metadata) {
+			this.omit_all_metadata = this.omit_metadata = true;
+		} else {
+			this.omit_all_metadata = false;
+			this.omit_metadata = omit_metadata;
+		}
 	}
 
-	// FILEFORMAT PARAMATERS
-	static final long DATE_GRANULARITY = OsmosisBinaryParser.DATE_GRANULARITY;
-
+	public void configBatchLimit(int batch_limit) {
+		this.batch_limit = batch_limit;
+	}
 	
 	// Paramaters affecting the output size.
 	protected final int MIN_DENSE = 10;
-	public final int BATCH_LIMIT = 4000;
+	protected int batch_limit = 4000;
 
 	// Parmaters affecting the output.
 
 	protected int granularity=100;
+	protected int date_granularity=1000;
 	protected boolean omit_metadata = false;
 	protected boolean omit_all_metadata = false;
+
 	/** How many primitives have been seen in this batch */
 	protected int batch_size=0;
 	protected int total_entities=0;
@@ -93,6 +100,7 @@ public class BinarySerializer {
 		}
 		primblock.setStringtable(stringtable.serialize());
 		primblock.setGranularity(this.granularity);
+		primblock.setDateGranularity(this.date_granularity);
 
 		Osmformat.PrimitiveBlock message=primblock.build();
 		

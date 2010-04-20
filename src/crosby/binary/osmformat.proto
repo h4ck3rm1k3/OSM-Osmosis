@@ -122,6 +122,7 @@ message PrimitiveBlock {
   repeated PrimitiveGroup primitivegroup = 2;
 
   optional int32 granularity = 17 [default=100]; 
+  optional int32 date_granularity = 18 [default=1000]; 
 
   /* Lat&lon are
   measured in units of granularity equal to 1 nanodegrees. The default

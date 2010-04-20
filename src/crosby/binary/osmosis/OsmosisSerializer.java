@@ -66,7 +66,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					b.setUid(e.getUser().getId());
 					b.setUserSid(stable.getIndex(e.getUser().getName()));
 				}
-				b.setTimestamp((int)(e.getTimestamp().getTime()/1000));
+				b.setTimestamp((int)(e.getTimestamp().getTime()/date_granularity));
 				b.setVersion(e.getVersion());
 			}
 			return b;
@@ -282,7 +282,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 
 		public void checkLimit() {
 			total_entities++;
-			if (++batch_size < BATCH_LIMIT)
+			if (++batch_size < batch_limit)
 				return;
 			switchTypes();
 			processBatch();

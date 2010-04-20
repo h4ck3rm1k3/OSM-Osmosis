@@ -36,9 +36,17 @@ public class OsmosisSerializerFactory extends TaskManagerFactory {
 
 			// Build the task object.
 			try {
-				task = new OsmosisSerializer(
-						new BlockOutputStream(
-								new FileOutputStream(file)));
+				BlockOutputStream output = new BlockOutputStream(
+						new FileOutputStream(file));
+				task = new OsmosisSerializer(output);
+				task.configBatchLimit(this.getIntegerArgument(taskConfig,"batchlimit",4000));
+				task.configOmit(
+						this.getBooleanArgument(taskConfig, "omitallmetadata", false),
+						this.getBooleanArgument(taskConfig, "omitmetadata", false));
+				task.configGranularity(this.getIntegerArgument(taskConfig,"granularity",100));
+
+				output.setCompress(this.getStringArgument(taskConfig, "compress", "none"));
+				
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
