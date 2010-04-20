@@ -1,6 +1,7 @@
 package crosby.binary.file;
 
 import java.io.DataInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.DataFormatException;
@@ -57,14 +58,17 @@ public class FileBlockReference extends FileBlockBase {
 		return out;
 	}
 
-	public FileBlock read(DataInputStream input) throws IOException {
-		// TODO: SEEK.
-		assert false;
-		byte buf[] = new byte[getDatasize()];
-		input.readFully(buf);
-		return parseFrom(buf);
+	public FileBlock read(InputStream input) throws IOException {
+		if (input instanceof FileInputStream) {
+			((FileInputStream)input).getChannel().position(data_offset);
+			byte buf[] = new byte[getDatasize()];
+			((DataInputStream)input).readFully(buf);
+			return parseFrom(buf);
+		} else {
+			throw new Error("Random access binary reads require seekability");
+		}
 	}
-	
+
 
 	protected int datasize;
 	/** Offset into the file of the data part of the block */

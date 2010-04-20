@@ -48,7 +48,7 @@ public class BlockOutputStream {
 		outwrite.close();
 	}
 	
-	DataOutputStream outwrite;
+	OutputStream outwrite;
 	List<FileBlockReference> writtenblocks = new ArrayList<FileBlockReference>();
 	CompressFlags compression;
 }

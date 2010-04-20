@@ -2,7 +2,10 @@ package crosby.binary.file;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -50,7 +53,8 @@ public class FileBlock extends FileBlockBase {
 		blobbuilder.setZlibData(compressed);	
 		deflater.end();
 	}
-	public FileBlockReference writeTo(DataOutputStream outwrite, CompressFlags flags) throws IOException {
+	
+	public FileBlockReference writeTo(OutputStream outwrite, CompressFlags flags) throws IOException {
 		Fileformat.FileBlockHeader.Builder builder = Fileformat.FileBlockHeader.newBuilder();
 		if (indexdata != null)
 			builder.setIndexdata(indexdata);
@@ -74,15 +78,18 @@ public class FileBlock extends FileBlockBase {
 
 		//System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
 		//		size,message.getSerializedSize(),blob.getSerializedSize());
-		outwrite.writeInt(size);
-		long offset = -1; // TODO: Need to get the real offset;
-		message.writeTo(outwrite); 		
+		(new DataOutputStream(outwrite)).writeInt(size);
+		message.writeTo(outwrite);
+		long offset = -1;
+		if (outwrite instanceof FileOutputStream)
+			offset = ((FileOutputStream)outwrite).getChannel().position();
+		
 		blob.writeTo(outwrite);
 		return FileBlockReference.newInstance(this,offset,size);
 	}
 
 	/** Reads or skips a fileblock. */
-	static void process(DataInputStream input, BlockReaderAdapter callback) throws IOException {
+	static void process(InputStream input, BlockReaderAdapter callback) throws IOException {
 		FileBlockHead fileblock = FileBlockHead.readHead(input);
 		if (callback.skipBlock(fileblock)) {
 			//System.out.format("Attempt to skip %d bytes\n",header.getDatasize());

@@ -10,8 +10,8 @@ import crosby.binary.Fileformat;
 
 public class BlockInputStream {		
 	// TODO: Should be seekable input stream!
-	public BlockInputStream(InputStream input, FileBlock.Adaptor adaptor) {
-		this.input = new DataInputStream(input);
+	public BlockInputStream(InputStream input, BlockReaderAdapter adaptor) {
+		this.input = input;
 		this.adaptor = adaptor;
 	}
 
@@ -27,6 +27,6 @@ public class BlockInputStream {
 		input.close();
 	}
 
-	DataInputStream input;
+	InputStream input;
 	BlockReaderAdapter adaptor;
 }

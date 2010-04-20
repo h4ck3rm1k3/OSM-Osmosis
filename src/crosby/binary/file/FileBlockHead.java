@@ -2,6 +2,7 @@ package crosby.binary.file;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -18,11 +19,12 @@ public class FileBlockHead extends FileBlockReference {
 	}
 
 	/** Read the header. After reading the header, either the contents must be skipped or read */
-	static FileBlockHead readHead(DataInputStream input) throws IOException {
-		int headersize = input.readInt();
+	static FileBlockHead readHead(InputStream input) throws IOException {
+		DataInputStream datinput = new DataInputStream(input);
+		int headersize = datinput.readInt();
 		//System.out.format("Header size %d %x\n",headersize,headersize);
 		byte buf[] = new byte[headersize];
-		input.readFully(buf);
+		datinput.readFully(buf);
 		//System.out.format("Read buffer for header of %d bytes\n",buf.length);
 		Fileformat.FileBlockHeader header = Fileformat.FileBlockHeader.parseFrom(buf);
 		FileBlockHead fileblock = new FileBlockHead(header.getType(),header.getIndexdata());
@@ -34,14 +36,18 @@ public class FileBlockHead extends FileBlockReference {
 
 	/** Assumes the stream is positioned over at the start of the data, skip over it. 
 	 * @throws IOException */
-	void skipContents(DataInputStream input) throws IOException {
+	void skipContents(InputStream input) throws IOException {
 		if (input.skip(getDatasize()) != getDatasize())
 			assert false: "SHORT READ";
 	}
 
-	FileBlock readContents(DataInputStream input) throws IOException {
+	/** Assumes the stream is positioned over at the start of the data, read it and return 
+	 * the complete FileBlock
+	 * @throws IOException */
+	FileBlock readContents(InputStream input) throws IOException {
+		DataInputStream datinput = new DataInputStream(input);
 		byte buf[] = new byte[getDatasize()];
-		input.readFully(buf);
+		datinput.readFully(buf);
 		return parseFrom(buf);
 	}
 }
