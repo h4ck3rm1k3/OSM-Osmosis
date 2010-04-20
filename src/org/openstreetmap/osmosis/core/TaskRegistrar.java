@@ -91,6 +91,9 @@ import org.openstreetmap.osmosis.core.xml.v0_6.XmlWriterFactory;
 
 import crosby.binary.osmosis.OsmosisReaderFactory;
 import crosby.binary.osmosis.OsmosisSerializerFactory;
+import crosby.counttags.CountTagsFactory;
+import crosby.keeptags.KeepTagsFactory;
+import crosby.removetags.RemoveTagsFactory;
 
 
 /**
@@ -272,6 +275,11 @@ public class TaskRegistrar {
 		factoryRegister.register("repa", new ApidbFileReplicatorFactory());
 		factoryRegister.register("simplify-change", new ChangeSimplifierFactory());
 		factoryRegister.register("simc", new ChangeSimplifierFactory());
+
+		factoryRegister.register("counttags", new CountTagsFactory());
+		factoryRegister.register("removetags", new RemoveTagsFactory());
+		factoryRegister.register("keeptags", new KeepTagsFactory());
+		
 		
 		factoryRegister.register("apply-change-0.5",
 				new org.openstreetmap.osmosis.core.change.v0_5.ChangeApplierFactory());
