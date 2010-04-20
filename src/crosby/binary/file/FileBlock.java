@@ -15,43 +15,21 @@ import crosby.binary.Fileformat.Blob;
 import crosby.binary.Fileformat.FileBlockHeader;
 import crosby.binary.Fileformat.FileBlockHeader.Builder;
 
-public class FileBlock {
-	/** An adaptor that receives blocks from an input stream */
-	public interface Adaptor {
-		/** Does the reader understand this block? Does it want the data in it? 
-		 * 
-		 * Data is not actually in the block and not available to a fetch.
-		 * 
-		 * Note that with an index, it may be that the reader is passed a lot of 'skipBlock' callbacks.
-		 * Then, the blocks are returned in file order through handleblock.
-		 * */
-		boolean skipBlock(FileBlock message);
-		/** Called with the data in the block */
-		void handleBlock(FileBlock message);
-		void complete();
-	}
-
-
-	/** Identifies the type of the data within a block */
-	public final String type;
+public class FileBlock extends FileBlockBase {
 	/** Contains the contents of a block for use or further processing */
-	private ByteString data; // serialized Format.Blob 
-
-	/** Block metadata, stored in the index block and as a prefix for every block. */
-	public final ByteString indexdata;
+	ByteString data; // serialized Format.Blob 
 
 	private FileBlock(String type, ByteString blob, ByteString indexdata) {
-		this.type = type;
+		super(type,indexdata);
 		this.data = blob;
-		this.indexdata = indexdata;
 	}
 
 	public static FileBlock newInstance(String type, ByteString blob, ByteString indexdata) {
 		return new FileBlock(type,blob,indexdata);
-
 	}
-
-	enum CompressFlags {NONE, DEFLATE};
+	public static FileBlock newInstance(String type, ByteString indexdata) {
+		return new FileBlock(type,null,indexdata);
+	}
 
 	protected void deflateInto(crosby.binary.Fileformat.Blob.Builder blobbuilder) {
 		int size = data.size();
@@ -72,7 +50,7 @@ public class FileBlock {
 		blobbuilder.setZlibData(compressed);	
 		deflater.end();
 	}
-	public void writeTo(DataOutputStream outwrite, CompressFlags flags) throws IOException {
+	public FileBlockReference writeTo(DataOutputStream outwrite, CompressFlags flags) throws IOException {
 		Fileformat.FileBlockHeader.Builder builder = Fileformat.FileBlockHeader.newBuilder();
 		if (indexdata != null)
 			builder.setIndexdata(indexdata);
@@ -97,67 +75,24 @@ public class FileBlock {
 		//System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
 		//		size,message.getSerializedSize(),blob.getSerializedSize());
 		outwrite.writeInt(size);
+		long offset = -1; // TODO: Need to get the real offset;
 		message.writeTo(outwrite); 		
 		blob.writeTo(outwrite);
-
-		// No longer store the blob, just the metadata.
-		this.data = null;
-		// TODO: Track the locations of the blocks so that I can 
-		// also store an inbox block at the end.
+		return FileBlockReference.newInstance(this,offset,size);
 	}
 
 	/** Reads or skips a fileblock. */
-	static void process(DataInputStream input, Adaptor callback) throws IOException {
-		int headersize = input.readInt();
-		//System.out.format("Header size %d %x\n",headersize,headersize);
-		byte buf[] = new byte[headersize];
-		input.readFully(buf);
-		//System.out.format("Read buffer for header of %d bytes\n",buf.length);
-		Fileformat.FileBlockHeader header = Fileformat.FileBlockHeader.parseFrom(buf);
-
-		//System.out.println(header);
-
-		FileBlock fileblock = new FileBlock(header.getType(),null,header.getIndexdata());
+	static void process(DataInputStream input, BlockReaderAdapter callback) throws IOException {
+		FileBlockHead fileblock = FileBlockHead.readHead(input);
 		if (callback.skipBlock(fileblock)) {
 			//System.out.format("Attempt to skip %d bytes\n",header.getDatasize());
-			if (input.skip(header.getDatasize()) != header.getDatasize())
-				assert false: "SHORT READ";
-			return;
+			fileblock.skipContents(input);
 		} else {
-			//System.out.format("Attempt to read fully %d (%x) bytes\n",header.getDatasize(),header.getDatasize());
-			buf = new byte[header.getDatasize()];
-			input.readFully(buf);
-			Fileformat.Blob blob = Fileformat.Blob.parseFrom(buf);
-			if (blob.hasRaw()) {
-				fileblock.data = blob.getRaw();
-			}
-			else if (blob.hasZlibData()) {
-				byte out[] = new byte[blob.getRawSize()];
-				Inflater decompresser = new Inflater();
-				 decompresser.setInput(blob.getZlibData().toByteArray());
-				 //decompresser.getRemaining();
-				 try {
-					decompresser.inflate(out);
-				} catch (DataFormatException e) {
-					e.printStackTrace();
-					throw new Error(e);
-				}
-				 assert (decompresser.finished());
-				 decompresser.end();
-				 fileblock.data = ByteString.copyFrom(out);
-			}			 
-
-			//return new FileBlock(header.getType(),blob,header.getIndexdata());
-			callback.handleBlock(fileblock);
+			callback.handleBlock(fileblock.readContents(input));
 		}
-
 	}
 
 	public ByteString getData() {
 		return data;
-	}
-
-	public String getType() {
-		return type;
 	}
 }

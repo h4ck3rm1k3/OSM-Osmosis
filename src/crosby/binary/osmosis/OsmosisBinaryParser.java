@@ -33,10 +33,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import crosby.binary.Osmformat;
 import crosby.binary.Osmformat.DenseNodes;
+import crosby.binary.file.BlockReaderAdapter;
 import crosby.binary.file.BlockInputStream;
 import crosby.binary.file.FileBlock;
+import crosby.binary.file.FileBlockBase;
+import crosby.binary.file.FileBlockReference;
 
-public class OsmosisBinaryParser implements FileBlock.Adaptor {
+public class OsmosisBinaryParser implements BlockReaderAdapter {
 		@Override
 		public void handleBlock(FileBlock message) {
 			// TODO Auto-generated method stub
@@ -58,8 +61,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		}
 
 		// TODO: Later make this adaptor abstract so that skipBlock can be overridden.
-		@Override
-		public boolean skipBlock(FileBlock block) {
+		public boolean skipBlock(FileBlockReference block) {
 			//System.out.println("Seeing block of type: "+block.getType());
 			if (block.getType().equals("OSMData"))
 				return false;

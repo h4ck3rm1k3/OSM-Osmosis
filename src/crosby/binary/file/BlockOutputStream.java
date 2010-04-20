@@ -9,15 +9,13 @@ import java.util.List;
 
 import com.google.protobuf.CodedOutputStream;
 
-import crosby.binary.file.FileBlock.CompressFlags;
-
 public class BlockOutputStream {
 	public BlockOutputStream(OutputStream output) {
 		this.outwrite = new DataOutputStream(output);
 		this.compression = CompressFlags.DEFLATE;
 	}
 
-	public void setCompress(FileBlock.CompressFlags flag) {
+	public void setCompress(CompressFlags flag) {
 		compression = flag;
 	}
 	
@@ -36,9 +34,9 @@ public class BlockOutputStream {
 	}
 
 	/** Write a specific block with a specific compression flags */
-	public void write(FileBlock block,FileBlock.CompressFlags compression) throws IOException {
-		block.writeTo(outwrite,compression);
-		writtenblocks.add(block);
+	public void write(FileBlock block,CompressFlags compression) throws IOException {
+		FileBlockReference ref = block.writeTo(outwrite,compression);
+		writtenblocks.add(ref);
 	}
 
 	public void flush() throws IOException {
@@ -51,6 +49,8 @@ public class BlockOutputStream {
 	}
 	
 	DataOutputStream outwrite;
-	List<FileBlock> writtenblocks = new ArrayList<FileBlock>();
+	List<FileBlockReference> writtenblocks = new ArrayList<FileBlockReference>();
 	CompressFlags compression;
 }
+
+enum CompressFlags {NONE, DEFLATE}

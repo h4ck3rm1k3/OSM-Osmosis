@@ -28,5 +28,5 @@ public class BlockInputStream {
 	}
 
 	DataInputStream input;
-	FileBlock.Adaptor adaptor;
+	BlockReaderAdapter adaptor;
 }
