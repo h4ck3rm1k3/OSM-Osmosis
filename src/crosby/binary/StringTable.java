@@ -32,15 +32,18 @@ public class StringTable {
 			@Override
 			public int compare(String s1, String s2) {
 				int diff = counts.get(s2)-counts.get(s1);
-				if (diff != 0)
-					return diff;
-				else
-					return s1.compareTo(s2);
+				return diff;
 			}
 		};
 
 		set = counts.keySet().toArray(new String[0]);
+		// Sort based on the frequency.
 		Arrays.sort(set,comparator);
+		// Each group of keys that serializes to the same number of bytes is sorted lexiconographically.
+		// to maximize deflate compression.
+		Arrays.sort(set,Math.min(0,set.length),Math.min(1<<7,set.length));
+		Arrays.sort(set,Math.min(1<<7,set.length),Math.min(1<<14,set.length));
+		Arrays.sort(set,Math.min(1<<14,set.length),Math.min(1<<21,set.length),comparator);
 
 		stringmap = new HashMap<String,Integer>(2*set.length);
 		for (int i = 0 ; i < set.length ; i++) {
