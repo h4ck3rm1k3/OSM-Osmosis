@@ -37,51 +37,61 @@ message StringTable {
 
 /* Metadata Included into each primitive. */
 message Info {
-   optional int32 version = 2 [default = -1];
-   optional int32 timestamp = 3;
+   optional int32 version = 1 [default = -1];
+   optional int32 timestamp = 2;
+   optional int64 changeset = 3;
    optional int32 uid = 4;
    optional int32 user_sid = 5;
-   optional int64 changeset = 6;
 }
 
 message ChangeSet {
    required int64 id = 1;
-   optional Info info = 5;
-   required fixed32 created_at = 7;
-   optional uint32 closetime_delta = 8; // Delta encoded with respect to created_at
-   required bool open = 9;
-   optional BBox bbox = 10;
-   repeated uint32 keys = 11 [packed = true];
-   repeated uint32 vals = 12 [packed = true];
+   // Parallel arrays.
+   repeated uint32 keys = 2 [packed = true]; // String IDs.
+   repeated uint32 vals = 3 [packed = true]; // String IDs.
+
+   optional Info info = 4;
+
+   required int32 created_at = 8;
+   optional int32 closetime_delta = 9;
+   required bool open = 10;
+   optional BBox bbox = 11;
 }
 
 
 message Node {
-   required sint64 id = 1; // Delta coded between nodes in a group.
-   required sint64 lat = 7; // Delta coding lat&lon saves about 3-5% w/full raft of metadata
-   required sint64 lon = 8;
-   repeated uint32 keys = 9 [packed = true];
-   repeated uint32 vals = 10 [packed = true];
-   optional Info info = 11;
+   required sint64 id = 1;
+   // Parallel arrays.
+   repeated uint32 keys = 2 [packed = true];  // String IDs.
+   repeated uint32 vals = 3 [packed = true]; // String IDs.
+
+   optional Info info = 4;
+
+   required sint64 lat = 8;
+   required sint64 lon = 9;
 }
 
+/* Each array corresponds to a column of nodes. */
 message DenseNodes {
-   repeated sint64 id = 1; // DELTA coded
-   repeated sint64 lat = 7 [packed = true]; // DELTA coded
-   repeated sint64 lon = 8 [packed = true]; // DELTA coded
-   repeated Info info = 12;
+   repeated sint64 id = 1 [packed = true]; // DELTA coded
+
+   repeated Info info = 4;
+
+   repeated sint64 lat = 8 [packed = true]; // DELTA coded
+   repeated sint64 lon = 9 [packed = true]; // DELTA coded
 }
 
 
 message Way {
    required int64 id = 1;
-   optional Info info = 7;
-   repeated sint64 refs = 8 [packed = true] ;  // DELTA encoded
+   // Parallel arrays.
+   repeated uint32 keys = 2 [packed = true];
+   repeated uint32 vals = 3 [packed = true];
 
-   repeated uint32 keys = 9 [packed = true];
-   repeated uint32 vals = 10 [packed = true];
+   optional Info info = 4;
+
+   repeated sint64 refs = 8 [packed = true];  // DELTA encoded
 }
-
 
 message Relation {
   enum MemberType {
@@ -90,25 +100,26 @@ message Relation {
     RELATION = 2;
   } 
    required int64 id = 1;
-   optional Info info = 7;
+   // Parallel arrays.
+   repeated uint32 keys = 2 [packed = true];
+   repeated uint32 vals = 3 [packed = true];
+
+   optional Info info = 4;
+
    // Parallel arrays
    repeated int32 roles_sid = 8 [packed = true];
    repeated sint64 memids = 9 [packed = true]; // DELTA encoded
    repeated MemberType types = 10 [packed = true];
-
-   // Parallel arrays.
-   repeated uint32 keys = 11 [packed = true];
-   repeated uint32 vals = 12 [packed = true];
-
 }
+
 
 // Group of OSMPrimitives. All primitives in a group must be the same type.
 message PrimitiveGroup {
-  optional DenseNodes dense = 7; // FIX: Should be optional.
-  repeated Node     nodes = 3;
-  repeated Way      ways = 4;
-  repeated Relation relations = 5;
-  repeated ChangeSet changesets = 6;
+  repeated Node     nodes = 1;
+  optional DenseNodes dense = 2;
+  repeated Way      ways = 3;
+  repeated Relation relations = 4;
+  repeated ChangeSet changesets = 5;
 }
 
 
@@ -127,7 +138,7 @@ message PrimitiveBlock {
 
 
   // Optional extensions, also included in index data.
-  optional BBox bbox = 100;
+  //optional BBox bbox = 100;
 }
 
 message HeaderBlock {
