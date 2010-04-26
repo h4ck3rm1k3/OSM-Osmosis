@@ -36,6 +36,13 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 		super(output);
 	}
 
+	static boolean isValidInt(String s) {
+		if (s.matches("^[0-9]{1,19}$"))
+			return true;
+		else
+			return false;
+	}
+	
 	abstract class Prim<T extends Entity>  {
 		ArrayList<T> contents= new ArrayList<T>();
 		public void add(T item) {
@@ -48,7 +55,10 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				Collection<Tag> tags = i.getTags();
 				for (Tag tag : tags) {
 					stable.incr(tag.getKey());
-					stable.incr(tag.getValue());
+					if (encode_ints_specially && isValidInt(tag.getValue()))
+						; // Do nothing, 
+					else
+						stable.incr(tag.getValue());						
 				}
 				if (omit_metadata == false)
 					stable.incr(i.getUser().getName());
@@ -157,8 +167,13 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				bi.setLon(lon-0*lastlon); lastlon = lon; // TODO: FIX 0*
 				bi.setLat(lat-0*lastlat); lastlat = lat; // TODO: FIX 0*
 				for (Tag t : i.getTags()) {
-					bi.addKeys(stable.getIndex(t.getKey()));
-					bi.addVals(stable.getIndex(t.getValue()));
+					if (encode_ints_specially && isValidInt(t.getValue())) {
+						bi.addKeysInt(stable.getIndex(t.getKey()));
+						bi.addValsInt(Long.parseLong(t.getValue()));
+					} else {
+						bi.addKeys(stable.getIndex(t.getKey()));
+						bi.addVals(stable.getIndex(t.getValue()));
+					}
 				}
 				if (omit_metadata) {
 					// Nothing.
@@ -187,8 +202,13 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					lastid = id;
 				}
 				for (Tag t : i.getTags()) {
-					bi.addKeys(stable.getIndex(t.getKey()));
-					bi.addVals(stable.getIndex(t.getValue()));
+					if (encode_ints_specially && isValidInt(t.getValue())) {
+						bi.addKeysInt(stable.getIndex(t.getKey()));
+						bi.addValsInt(Long.parseLong(t.getValue()));
+					} else {
+						bi.addKeys(stable.getIndex(t.getKey()));
+						bi.addVals(stable.getIndex(t.getValue()));
+					}
 				}
 				if (omit_metadata) {
 					// Nothing.
@@ -236,8 +256,13 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				}
 
 				for (Tag t : i.getTags()) {
-					bi.addKeys(stable.getIndex(t.getKey()));
-					bi.addVals(stable.getIndex(t.getValue()));
+					if (encode_ints_specially && isValidInt(t.getValue())) {
+						bi.addKeysInt(stable.getIndex(t.getKey()));
+						bi.addValsInt(Long.parseLong(t.getValue()));
+					} else {
+						bi.addKeys(stable.getIndex(t.getKey()));
+						bi.addVals(stable.getIndex(t.getValue()));
+					}
 				}
 				if (omit_metadata) {
 					// Nothing.

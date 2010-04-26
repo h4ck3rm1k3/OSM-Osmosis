@@ -53,6 +53,7 @@ message ChangeSet {
    optional BBox bbox = 10;
    repeated uint32 keys = 11 [packed = true];
    repeated uint32 vals = 12 [packed = true];
+
 }
 
 
@@ -63,6 +64,8 @@ message Node {
    repeated uint32 keys = 9 [packed = true];
    repeated uint32 vals = 10 [packed = true];
    optional Info info = 11;
+   repeated uint32 keys_int = 12 [packed = true];
+   repeated uint64 vals_int = 13 [packed = true];
 }
 
 message DenseNodes {
@@ -80,6 +83,8 @@ message Way {
 
    repeated uint32 keys = 9 [packed = true];
    repeated uint32 vals = 10 [packed = true];
+   repeated uint32 keys_int = 12 [packed = true];
+   repeated uint64 vals_int = 13 [packed = true];
 }
 
 
@@ -99,6 +104,8 @@ message Relation {
    // Parallel arrays.
    repeated uint32 keys = 11 [packed = true];
    repeated uint32 vals = 12 [packed = true];
+   repeated uint32 keys_int = 13 [packed = true];
+   repeated uint64 vals_int = 14 [packed = true];
 
 }
 
