@@ -1,6 +1,8 @@
 package crosby.binary.file;
 
 import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.DataFormatException;
@@ -9,7 +11,9 @@ import java.util.zip.Inflater;
 import com.google.protobuf.ByteString;
 
 import crosby.binary.Fileformat;
-/** Represent the header of a fileblock when a set of fileblocks is read as in a stream
+/** Intermediate representation of the header of a fileblock when a set of fileblocks is read 
+ * as in a stream. The data in the fileblock must be either skipped (where the returned value 
+ * is a reference to the fileblock) or parsed.
  * @author crosby
  *
  */
@@ -31,6 +35,10 @@ public class FileBlockHead extends FileBlockReference {
 
 		fileblock.datasize = header.getDatasize();
 		//data_offset = 
+		fileblock.input = input;
+		if (input instanceof FileInputStream)
+			fileblock.data_offset = ((FileInputStream)input).getChannel().position();
+		
 		return fileblock;
 	}
 

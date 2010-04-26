@@ -6,7 +6,6 @@ import java.util.List;
 
 import crosby.binary.file.BlockOutputStream;
 import crosby.binary.file.FileBlock;
-import crosby.binary.osmosis.OsmosisBinaryParser;
 
 /** Generic serializer common code
  * 

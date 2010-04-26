@@ -11,7 +11,7 @@ public interface BlockReaderAdapter {
 	 * handleBlock will be called on all blocks that are not skipped, in file order.  
 	 * 
 	 * */
-	boolean skipBlock(FileBlockReference message);
+	boolean skipBlock(FileBlockPosition message);
 	/** Called with the data in the block */
 	void handleBlock(FileBlock message);
 

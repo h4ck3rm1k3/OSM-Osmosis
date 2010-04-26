@@ -1,23 +1,18 @@
 package crosby.binary.file;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.Inflater;
 
 import com.google.protobuf.ByteString;
 
 import crosby.binary.Fileformat;
-import crosby.binary.Fileformat.Blob;
-import crosby.binary.Fileformat.FileBlockHeader;
-import crosby.binary.Fileformat.FileBlockHeader.Builder;
 
+/** A full fileblock object contains both the metadata and data of a fileblock */
 public class FileBlock extends FileBlockBase {
 	/** Contains the contents of a block for use or further processing */
 	ByteString data; // serialized Format.Blob 
@@ -54,7 +49,7 @@ public class FileBlock extends FileBlockBase {
 		deflater.end();
 	}
 	
-	public FileBlockReference writeTo(OutputStream outwrite, CompressFlags flags) throws IOException {
+	public FileBlockPosition writeTo(OutputStream outwrite, CompressFlags flags) throws IOException {
 		Fileformat.FileBlockHeader.Builder builder = Fileformat.FileBlockHeader.newBuilder();
 		if (indexdata != null)
 			builder.setIndexdata(indexdata);
@@ -81,11 +76,12 @@ public class FileBlock extends FileBlockBase {
 		(new DataOutputStream(outwrite)).writeInt(size);
 		message.writeTo(outwrite);
 		long offset = -1;
+		
 		if (outwrite instanceof FileOutputStream)
 			offset = ((FileOutputStream)outwrite).getChannel().position();
-		
+			
 		blob.writeTo(outwrite);
-		return FileBlockReference.newInstance(this,offset,size);
+		return FileBlockPosition.newInstance(this,offset,size);
 	}
 
 	/** Reads or skips a fileblock. */

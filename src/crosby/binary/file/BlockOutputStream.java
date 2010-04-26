@@ -9,7 +9,11 @@ import java.util.List;
 
 import com.google.protobuf.CodedOutputStream;
 
+enum CompressFlags {
+	NONE, DEFLATE
+}
 public class BlockOutputStream {
+
 	public BlockOutputStream(OutputStream output) {
 		this.outwrite = new DataOutputStream(output);
 		this.compression = CompressFlags.DEFLATE;
@@ -35,7 +39,7 @@ public class BlockOutputStream {
 
 	/** Write a specific block with a specific compression flags */
 	public void write(FileBlock block,CompressFlags compression) throws IOException {
-		FileBlockReference ref = block.writeTo(outwrite,compression);
+		FileBlockPosition ref = block.writeTo(outwrite,compression);
 		writtenblocks.add(ref);
 	}
 
@@ -49,8 +53,6 @@ public class BlockOutputStream {
 	}
 	
 	OutputStream outwrite;
-	List<FileBlockReference> writtenblocks = new ArrayList<FileBlockReference>();
+	List<FileBlockPosition> writtenblocks = new ArrayList<FileBlockPosition>();
 	CompressFlags compression;
 }
-
-enum CompressFlags {NONE, DEFLATE}

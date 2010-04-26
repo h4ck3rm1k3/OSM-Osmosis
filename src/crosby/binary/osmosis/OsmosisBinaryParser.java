@@ -37,7 +37,7 @@ import crosby.binary.file.BlockReaderAdapter;
 import crosby.binary.file.BlockInputStream;
 import crosby.binary.file.FileBlock;
 import crosby.binary.file.FileBlockBase;
-import crosby.binary.file.FileBlockReference;
+import crosby.binary.file.FileBlockPosition;
 
 public class OsmosisBinaryParser implements BlockReaderAdapter {
 	
@@ -63,7 +63,7 @@ public class OsmosisBinaryParser implements BlockReaderAdapter {
 		}
 
 		// TODO: Later make this adaptor abstract so that skipBlock can be overridden.
-		public boolean skipBlock(FileBlockReference block) {
+		public boolean skipBlock(FileBlockPosition block) {
 			//System.out.println("Seeing block of type: "+block.getType());
 			if (block.getType().equals("OSMData"))
 				return false;
