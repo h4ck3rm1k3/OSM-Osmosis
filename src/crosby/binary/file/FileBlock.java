@@ -67,6 +67,9 @@ public class FileBlock {
 		builder.setDatasize(blob.getSerializedSize());
 		Fileformat.FileBlockHeader message = builder.build();
         int size = message.getSerializedSize();
+
+        //System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
+        //		size,message.getSerializedSize(),blob.getSerializedSize());
         outwrite.writeInt(size);
         message.writeTo(outwrite); 		
         blob.writeTo(outwrite);
@@ -80,14 +83,22 @@ public class FileBlock {
 	/** Reads or skips a fileblock. */
 	static void process(DataInputStream input, Adaptor callback) throws IOException {
 		int headersize = input.readInt();
+		//System.out.format("Header size %d %x\n",headersize,headersize);
 		byte buf[] = new byte[headersize];
 		input.readFully(buf);
+		//System.out.format("Read buffer for header of %d bytes\n",buf.length);
 		Fileformat.FileBlockHeader header = Fileformat.FileBlockHeader.parseFrom(buf);
+
+		//System.out.println(header);
+
 		FileBlock fileblock = new FileBlock(header.getType(),null,header.getIndexdata());
 		if (callback.skipBlock(fileblock)) {
-			assert input.skip(header.getDatasize()) == header.getDatasize();
+			//System.out.format("Attempt to skip %d bytes\n",header.getDatasize());
+			if (input.skip(header.getDatasize()) != header.getDatasize())
+				assert false: "SHORT READ";
 			return;
 		} else {
+			//System.out.format("Attempt to read fully %d (%x) bytes\n",header.getDatasize(),header.getDatasize());
 			buf = new byte[header.getDatasize()];
 			input.readFully(buf);
 			Fileformat.Blob blob = Fileformat.Blob.parseFrom(buf);

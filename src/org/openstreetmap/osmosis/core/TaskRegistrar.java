@@ -165,7 +165,7 @@ public class TaskRegistrar {
 		factoryRegister.register("derive-change", new ChangeDeriverFactory());
 		factoryRegister.register("dc", new ChangeDeriverFactory());
 		factoryRegister.register("read-xml", new XmlReaderFactory());
-		factoryRegister.register("write-bin", new OsmosisReaderFactory());
+		factoryRegister.register("read-bin", new OsmosisReaderFactory());
 		factoryRegister.register("fast-read-xml", new FastXmlReaderFactory());
 		factoryRegister.register("rx", new XmlReaderFactory());
         factoryRegister.register("read-xml-change",  new XmlChangeReaderFactory());

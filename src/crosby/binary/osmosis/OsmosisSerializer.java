@@ -16,6 +16,7 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Bound;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.OsmUser;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.RelationMember;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -28,6 +29,7 @@ import crosby.binary.Osmformat;
 import crosby.binary.StringTable;
 import crosby.binary.Osmformat.Relation.MemberType;
 import crosby.binary.file.BlockOutputStream;
+import crosby.binary.file.FileBlock;
 
 public class OsmosisSerializer extends BinarySerializer implements Sink {
 	public OsmosisSerializer(BlockOutputStream output) {
@@ -52,6 +54,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					stable.incr(i.getUser().getName());
 			}
 		}
+
 		public Osmformat.Info.Builder serializeMetadata(Entity e) {
 			StringTable stable = getStringTable();
 			Osmformat.Info.Builder b = Osmformat.Info.newBuilder();
@@ -59,9 +62,11 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				b.setChangeset((long)e.getChangesetId());
 			}
 			if (!omit_metadata) {
-				b.setUid(e.getUser().getId());
-				b.setUserSid(stable.getIndex(e.getUser().getName()));
-				b.setTimestamp((int)e.getTimestamp().getTime()); // TODO: RIGHT?
+				if (e.getUser() != OsmUser.NONE) {
+					b.setUid(e.getUser().getId());
+					b.setUserSid(stable.getIndex(e.getUser().getName()));
+				}
+				b.setTimestamp((int)(e.getTimestamp().getTime()/1000));
 				b.setVersion(e.getVersion());
 			}
 			return b;
@@ -145,13 +150,13 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 			System.out.format("%d Nodes   ",nodes.size());
 			StringTable stable = getStringTable();
 			Osmformat.PrimitiveGroup.Builder builder = Osmformat.PrimitiveGroup.newBuilder();
-			long lastlat = 0, lastlon = 0, lastid = 0;
+			long lastlat = 0, lastlon = 0;
 			for (Node i : nodes) {
 				long id = i.getId();
 				int lat = mapDegrees(i.getLatitude());
 				int lon = mapDegrees(i.getLongitude());
 				Osmformat.Node.Builder bi = Osmformat.Node.newBuilder();
-				bi.setId(id-lastid); lastid = id;
+				bi.setId(id);
 				bi.setLon(lon-0*lastlon); lastlon = lon; // TODO: FIX 0*
 				bi.setLat(lat-0*lastlat); lastlat = lat; // TODO: FIX 0*
 				for (Tag t : i.getTags()) {
@@ -162,7 +167,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					// Nothing.
 				} else {
 					if (omit_metadata)
-						bi.setChangesetId(i.getChangesetId());
+						bi.setChangesetid(i.getChangesetId());
 					else
 						bi.setInfo(serializeMetadata(i));
 				}
@@ -333,6 +338,24 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 	}
 
 	public void processBounds(Bound entity) {
+		Osmformat.HeaderBlock.Builder headerblock = Osmformat.HeaderBlock.newBuilder();
+
+		Osmformat.BBox.Builder bbox = Osmformat.BBox.newBuilder();
+		bbox.setLeft(mapRawDegrees(entity.getLeft()));
+		bbox.setBottom(mapRawDegrees(entity.getBottom()));
+		bbox.setRight(mapRawDegrees(entity.getRight()));
+		bbox.setTop(mapRawDegrees(entity.getTop()));
+
+		headerblock.setBbox(bbox);
+		Osmformat.HeaderBlock message=headerblock.build();
+		try {
+			output.write(FileBlock.newInstance("OSMHeader",message.toByteString(),null));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new Error(e);
+		}		
+		//output.
 		// TODO:
 	}
 

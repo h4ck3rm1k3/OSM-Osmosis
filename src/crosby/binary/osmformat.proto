@@ -21,10 +21,10 @@ Fileformat is layered to two levels. A 'storage' layer and a file layer.
 format. */
 
 message BBox {
-   required sfixed32 min_lon = 1;
-   required sfixed32 min_lat = 2;
-   required sint64 delta_lon = 3;
-   required sint64 delta_lat = 4;
+   required sint64 left = 1;
+   required sint64 right = 2;
+   required sint64 top = 3;
+   required sint64 bottom = 4;
 }
 
 //
@@ -133,3 +133,6 @@ message PrimitiveBlock {
   optional BBox bbox = 100;
 }
 
+message HeaderBlock {
+  required BBox bbox = 1;
+}

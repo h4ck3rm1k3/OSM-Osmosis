@@ -17,11 +17,12 @@ public class BlockInputStream {
 
 	public void process() throws IOException {
 		while (input.available() > 0) {
-			int size = input.readInt();
+			/*int size = input.readInt();
 			byte buf[] = new byte[size];
 			if (input.read(buf) != size) {
 				throw new IOException("Short read");
 			}
+			System.out.println("Header size: "+size); */
 			FileBlock.process(input,adaptor);
 		}
 	}

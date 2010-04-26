@@ -6,6 +6,7 @@ import java.util.List;
 
 import crosby.binary.file.BlockOutputStream;
 import crosby.binary.file.FileBlock;
+import crosby.binary.osmosis.OsmosisBinaryParser;
 
 /** Generic serializer common code
  * 
@@ -34,15 +35,20 @@ public class BinarySerializer {
 	public void configOmit(boolean omit_all_metadata) {
 		
 	}
+
+	// FILEFORMAT PARAMATERS
+	static final long DATE_GRANULARITY = OsmosisBinaryParser.DATE_GRANULARITY;
+
 	
 	// Paramaters affecting the output size.
 	protected final int MIN_DENSE = 10;
 	public final int BATCH_LIMIT = 4000;
 
 	// Parmaters affecting the output.
+
 	protected int granularity=100;
 	protected boolean omit_metadata = false;
-	protected boolean omit_all_metadata = true;
+	protected boolean omit_all_metadata = false;
 	/** How many primitives have been seen in this batch */
 	protected int batch_size=0;
 	protected int total_entities=0;
@@ -93,7 +99,7 @@ public class BinarySerializer {
 		
 		//System.out.println(message);
 		debug_bytes += message.getSerializedSize();
-		System.out.format("    =======>  %.2f / %.2f   (%dk)",
+		System.out.format("    =======>  %.2f / %.2f   (%dk)\n",
 				message.getSerializedSize()/1024.0, 
 				debug_bytes/1024/1024.0,
 				total_entities/1000);
@@ -111,9 +117,12 @@ public class BinarySerializer {
 			batch_size = 0;
 			groups.clear();
 		}
-		System.out.format("\n");
+		//System.out.format("\n");
 	}
 	
+	public long mapRawDegrees(double degrees) {
+		return (long)((degrees/.000000001));
+	}
 	public int mapDegrees(double degrees) {
 		return (int)((degrees/.0000001)/(granularity/100));
 	}

@@ -15,6 +15,7 @@ import org.openstreetmap.osmosis.core.container.v0_6.NodeContainer;
 import org.openstreetmap.osmosis.core.container.v0_6.RelationContainer;
 import org.openstreetmap.osmosis.core.container.v0_6.WayContainer;
 import org.openstreetmap.osmosis.core.domain.common.TimestampContainer;
+import org.openstreetmap.osmosis.core.domain.v0_6.Bound;
 import org.openstreetmap.osmosis.core.domain.v0_6.CommonEntityData;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
@@ -40,8 +41,13 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		public void handleBlock(FileBlock message) {
 			// TODO Auto-generated method stub
 			try {
-				Osmformat.PrimitiveBlock primblock=Osmformat.PrimitiveBlock.parseFrom(message.getData());
-				parse(primblock);
+				if (message.getType().equals("OSMHeader")) {
+					Osmformat.HeaderBlock headerblock=Osmformat.HeaderBlock.parseFrom(message.getData());
+					parse(headerblock);
+				} else if (message.getType().equals("OSMData")) {
+					Osmformat.PrimitiveBlock primblock=Osmformat.PrimitiveBlock.parseFrom(message.getData());
+					parse(primblock);
+				}
 			} catch (InvalidProtocolBufferException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -54,38 +60,35 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		// TODO: Later make this adaptor abstract so that skipBlock can be overridden.
 		@Override
 		public boolean skipBlock(FileBlock block) {
-			if (block.getType().equals("OSMDATA"))
-				return true;
-			if (block.getType().equals("OSMBBOX"))
-				return true;
-			return false;
+			System.out.println("Seeing block of type: "+block.getType());
+			if (block.getType().equals("OSMData"))
+				return false;
+			if (block.getType().equals("OSMHeader"))
+				return false;
+			System.out.println("Skipped block of type: "+block.getType());
+			return true;
 		}
 		
 
 	static OsmUser getUser(Osmformat.Info info,String strings[]) {
+		//System.out.println(info);
 		if (info.hasUid() && info.hasUserSid())
-			return new OsmUser((int)info.getUid(),strings[(int) info.getUserSid()]);
+			return new OsmUser(info.getUid(),strings[(int) info.getUserSid()]);
 		else
 			return OsmUser.NONE;
 	}
 
+	public static final long DATE_GRANULARITY = 1000;
 	static Date getDate(Osmformat.Info info) {
 		if (info.hasTimestamp()) 
-			return new Date(info.getTimestamp());
+			return new Date(DATE_GRANULARITY*info.getTimestamp());
 		else
-			return null;
-	}
-	
-	public CommonEntityData parseInfo(long changeset_id, long id) {
-		OsmUser user = OsmUser.NONE;
-		Date timestamp = null;
-		
-		return new CommonEntityData(				
-				id, -1, timestamp, user, changeset_id);
+			return NODATE;
 	}
 
 	final int NOVERSION = -1;
 	final int NOCHANGESET = -1;
+	static Date NODATE = new Date();
 	
 	public void parseDense(Osmformat.DenseNodes nodes, String strings[], int granularity) {
 		double multiplier = granularity*.000000001;
@@ -93,7 +96,7 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 		long last_id = 0, last_lat = 0, last_lon = 0;
 		for (int i=0 ; i < nodes.getIdCount(); i++) {
 			Node tmp;
-			List<Tag> tags = null;
+			List<Tag> tags = new ArrayList<Tag>(0);
 			long lat = nodes.getLat(i)+last_lat; last_lat = lat;
 			long lon = nodes.getLon(i)+last_lon; last_lon = lon;
 			long id =  nodes.getId(i)+last_id; last_id = id;
@@ -103,10 +106,10 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info,strings),
 						info.getChangeset(),tags,latf,lonf);
 			} else if (nodes.getChangesetIdCount() > 0) {
-				tmp=new Node(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
 						nodes.getChangesetId(i), tags, latf,lonf);
 			} else {
-				tmp=new Node(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags, latf, lonf);
 			}
 			sink.process(new NodeContainer(tmp));
@@ -132,11 +135,11 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 				Osmformat.Info info = i.getInfo();
 				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info,strings),
 						info.getChangeset(),tags,latf,lonf);
-			} else if (i.hasChangesetId()) {
-				tmp=new Node(id,NOVERSION,(Date)null,OsmUser.NONE,
-						i.getChangesetId(), tags, latf,lonf);
+			} else if (i.hasChangesetid()) {
+				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
+						i.getChangesetid(), tags, latf,lonf);
 			} else {
-				tmp=new Node(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags, latf, lonf);
 			}
 			sink.process(new NodeContainer(tmp));
@@ -168,11 +171,11 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 						info.getChangeset(),tags,
 						nodes);
 			} else if (i.hasChangesetId()) {
-				tmp=new Way(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Way(id,NOVERSION,NODATE,OsmUser.NONE,
 						i.getChangesetId(), tags,
 						nodes);
 			} else {
-				tmp=new Way(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Way(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags,
 						nodes);
 			}
@@ -216,16 +219,27 @@ public class OsmosisBinaryParser implements FileBlock.Adaptor {
 						info.getChangeset(),tags,
 						nodes);
 			} else if (i.hasChangesetId()) {
-				tmp=new Relation(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Relation(id,NOVERSION,NODATE,OsmUser.NONE,
 						i.getChangesetId(), tags,
 						nodes);
 			} else {
-				tmp=new Relation(id,NOVERSION,(Date)null,OsmUser.NONE,
+				tmp=new Relation(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags,
 						nodes);
 			}
 			sink.process(new RelationContainer(tmp));
 		}
+	}
+
+	public void parse(Osmformat.HeaderBlock block) {
+		double multiplier = .000000001;
+		double rightf = block.getBbox().getRight() * multiplier;
+		double leftf = block.getBbox().getLeft() * multiplier;
+		double topf = block.getBbox().getTop() * multiplier;
+		double bottomf = block.getBbox().getBottom() * multiplier;
+		String source = "http://www.openstreetmap.org/api/0.6";
+		Bound bounds = new Bound(rightf,leftf,topf,bottomf,source);
+		sink.process(new BoundContainer(bounds));
 	}
 	
 	public void parse(Osmformat.PrimitiveBlock block) {
