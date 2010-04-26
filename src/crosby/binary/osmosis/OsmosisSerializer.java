@@ -58,16 +58,16 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 		public Osmformat.Info.Builder serializeMetadata(Entity e) {
 			StringTable stable = getStringTable();
 			Osmformat.Info.Builder b = Osmformat.Info.newBuilder();
-			if (!omit_all_metadata) {
-				b.setChangeset((long)e.getChangesetId());
-			}
-			if (!omit_metadata) {
+			if (omit_metadata) {
+				// Nothing
+			} else {
 				if (e.getUser() != OsmUser.NONE) {
 					b.setUid(e.getUser().getId());
 					b.setUserSid(stable.getIndex(e.getUser().getName()));
 				}
 				b.setTimestamp((int)(e.getTimestamp().getTime()/date_granularity));
 				b.setVersion(e.getVersion());
+				b.setChangeset((long)e.getChangesetId());
 			}
 			return b;
 		}	
@@ -130,12 +130,9 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				bi.addId(id-lastid); lastid = id;
 				bi.addLon(lon-lastlon); lastlon = lon;
 				bi.addLat(lat-lastlat); lastlat = lat;
-				if (omit_all_metadata) {
+				if (omit_metadata) {
 					// Nothing.
 				} else {
-					if (omit_metadata)
-						bi.addChangesetId(i.getChangesetId());
-					else
 						bi.addInfo(serializeMetadata(i));
 				}
 			}
@@ -163,12 +160,9 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					bi.addKeys(stable.getIndex(t.getKey()));
 					bi.addVals(stable.getIndex(t.getValue()));
 				}
-				if (omit_all_metadata) {
+				if (omit_metadata) {
 					// Nothing.
 				} else {
-					if (omit_metadata)
-						bi.setChangesetid(i.getChangesetId());
-					else
 						bi.setInfo(serializeMetadata(i));
 				}
 			builder.addNodes(bi);
@@ -196,12 +190,9 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					bi.addKeys(stable.getIndex(t.getKey()));
 					bi.addVals(stable.getIndex(t.getValue()));
 				}
-				if (omit_all_metadata) {
+				if (omit_metadata) {
 					// Nothing.
 				} else {
-					if (omit_metadata)
-						bi.setChangesetId(i.getChangesetId());
-					else
 						bi.setInfo(serializeMetadata(i));
 				}
 			builder.addWays(bi);
@@ -248,12 +239,9 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 					bi.addKeys(stable.getIndex(t.getKey()));
 					bi.addVals(stable.getIndex(t.getValue()));
 				}
-				if (omit_all_metadata) {
+				if (omit_metadata) {
 					// Nothing.
 				} else {
-					if (omit_metadata)
-						bi.setChangesetId(i.getChangesetId());
-					else
 						bi.setInfo(serializeMetadata(i));
 				}
 			builder.addRelations(bi);

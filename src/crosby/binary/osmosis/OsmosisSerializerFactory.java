@@ -41,11 +41,10 @@ public class OsmosisSerializerFactory extends TaskManagerFactory {
 				task = new OsmosisSerializer(output);
 				task.configBatchLimit(this.getIntegerArgument(taskConfig,"batchlimit",4000));
 				task.configOmit(
-						this.getBooleanArgument(taskConfig, "omitallmetadata", false),
 						this.getBooleanArgument(taskConfig, "omitmetadata", false));
 				task.configGranularity(this.getIntegerArgument(taskConfig,"granularity",100));
 
-				output.setCompress(this.getStringArgument(taskConfig, "compress", "none"));
+				output.setCompress(this.getStringArgument(taskConfig, "compress", "deflate"));
 				
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block

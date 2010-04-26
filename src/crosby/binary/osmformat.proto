@@ -62,7 +62,6 @@ message Node {
    required sint64 lon = 8;
    repeated uint32 keys = 9 [packed = true];
    repeated uint32 vals = 10 [packed = true];
-   optional uint64 changesetid = 12;
    optional Info info = 11;
 }
 
@@ -70,7 +69,6 @@ message DenseNodes {
    repeated sint64 id = 1; // DELTA coded
    repeated sint64 lat = 7 [packed = true]; // DELTA coded
    repeated sint64 lon = 8 [packed = true]; // DELTA coded
-   repeated sint64 changeset_id = 11 [packed = true]; // DELTA coded.
    repeated Info info = 12;
 }
 
@@ -82,7 +80,6 @@ message Way {
 
    repeated uint32 keys = 9 [packed = true];
    repeated uint32 vals = 10 [packed = true];
-   optional uint64 changeset_id = 12;
 }
 
 
@@ -103,7 +100,6 @@ message Relation {
    repeated uint32 keys = 11 [packed = true];
    repeated uint32 vals = 12 [packed = true];
 
-   optional uint64 changeset_id = 13;
 }
 
 // Group of OSMPrimitives. All primitives in a group must be the same type.

@@ -40,7 +40,9 @@ import crosby.binary.file.FileBlockBase;
 import crosby.binary.file.FileBlockReference;
 
 public class OsmosisBinaryParser implements BlockReaderAdapter {
-		@Override
+	
+	
+	@Override
 		public void handleBlock(FileBlock message) {
 			// TODO Auto-generated method stub
 			try {
@@ -116,9 +118,6 @@ public class OsmosisBinaryParser implements BlockReaderAdapter {
 				Osmformat.Info info = nodes.getInfo(i);
 				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,latf,lonf);
-			} else if (nodes.getChangesetIdCount() > 0) {
-				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
-						nodes.getChangesetId(i), tags, latf,lonf);
 			} else {
 				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags, latf, lonf);
@@ -146,9 +145,6 @@ public class OsmosisBinaryParser implements BlockReaderAdapter {
 				Osmformat.Info info = i.getInfo();
 				tmp = new Node(id,info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,latf,lonf);
-			} else if (i.hasChangesetid()) {
-				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
-						i.getChangesetid(), tags, latf,lonf);
 			} else {
 				tmp=new Node(id,NOVERSION,NODATE,OsmUser.NONE,
 						NOCHANGESET, tags, latf, lonf);
@@ -180,10 +176,6 @@ public class OsmosisBinaryParser implements BlockReaderAdapter {
 				Osmformat.Info info = i.getInfo();
 				tmp = new Way(id, info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,
-						nodes);
-			} else if (i.hasChangesetId()) {
-				tmp=new Way(id,NOVERSION,NODATE,OsmUser.NONE,
-						i.getChangesetId(), tags,
 						nodes);
 			} else {
 				tmp=new Way(id,NOVERSION,NODATE,OsmUser.NONE,
@@ -228,10 +220,6 @@ public class OsmosisBinaryParser implements BlockReaderAdapter {
 				Osmformat.Info info = i.getInfo();
 				tmp = new Relation(id, info.getVersion(), getDate(info), getUser(info),
 						info.getChangeset(),tags,
-						nodes);
-			} else if (i.hasChangesetId()) {
-				tmp=new Relation(id,NOVERSION,NODATE,OsmUser.NONE,
-						i.getChangesetId(), tags,
 						nodes);
 			} else {
 				tmp=new Relation(id,NOVERSION,NODATE,OsmUser.NONE,

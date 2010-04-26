@@ -32,13 +32,8 @@ public class BinarySerializer {
 		this.granularity = granularity;
 	}
 
-	public void configOmit(boolean omit_all_metadata,boolean omit_metadata) {
-		if (omit_all_metadata) {
-			this.omit_all_metadata = this.omit_metadata = true;
-		} else {
-			this.omit_all_metadata = false;
+	public void configOmit(boolean omit_metadata) {
 			this.omit_metadata = omit_metadata;
-		}
 	}
 
 	public void configBatchLimit(int batch_limit) {
@@ -54,7 +49,6 @@ public class BinarySerializer {
 	protected int granularity=100;
 	protected int date_granularity=1000;
 	protected boolean omit_metadata = false;
-	protected boolean omit_all_metadata = false;
 
 	/** How many primitives have been seen in this batch */
 	protected int batch_size=0;
