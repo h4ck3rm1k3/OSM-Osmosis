@@ -118,7 +118,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				List<Node> nodes) {
 			if (nodes.size() == 0)
 				return;
-			System.out.format("%d Dense   ",nodes.size());
+			//System.out.format("%d Dense   ",nodes.size());
 			Osmformat.PrimitiveGroup.Builder builder = Osmformat.PrimitiveGroup.newBuilder();
 
 			long lastlat = 0, lastlon = 0, lastid = 0;
@@ -144,7 +144,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 				List<Node> nodes) {
 			if (nodes.size() == 0)
 				return;
-			System.out.format("%d Nodes   ",nodes.size());
+			//System.out.format("%d Nodes   ",nodes.size());
 			StringTable stable = getStringTable();
 			Osmformat.PrimitiveGroup.Builder builder = Osmformat.PrimitiveGroup.newBuilder();
 			long lastlat = 0, lastlon = 0;
@@ -174,7 +174,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 
 	class WayGroup extends Prim<Way> implements PrimGroupWriterInterface {
 		public void serialize(Osmformat.PrimitiveBlock.Builder parentbuilder) {
-			System.out.format("%d Ways  ",contents.size());
+			//System.out.format("%d Ways  ",contents.size());
 			StringTable stable = getStringTable();
 			Osmformat.PrimitiveGroup.Builder builder = Osmformat.PrimitiveGroup.newBuilder();
 			for (Way i : contents) {
@@ -211,7 +211,7 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 		}
 
 		public void serialize(Osmformat.PrimitiveBlock.Builder parentbuilder) {
-			System.out.format("%d Relations  ",contents.size());
+			//System.out.format("%d Relations  ",contents.size());
 			StringTable stable = getStringTable();
 			Osmformat.PrimitiveGroup.Builder builder = Osmformat.PrimitiveGroup.newBuilder();
 			for (Relation i : contents) {
