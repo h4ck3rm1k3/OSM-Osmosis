@@ -69,6 +69,18 @@ public class FileBlockReference extends FileBlockBase {
 		}
 	}
 
+	/** TODO: Convert this reference into a serialized representation that can be stored. */
+	public ByteString serialize() {
+		assert false; // TODO
+		return null;
+	}
+	
+	/** TODO: Parse a serialized representation of this block reference */
+	static FileBlockReference parseFrom(ByteString b) {
+		assert false; // TODO
+		return null;
+	}
+	
 
 	protected int datasize;
 	/** Offset into the file of the data part of the block */
