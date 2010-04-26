@@ -22,7 +22,7 @@ public class FileBlockReference extends FileBlockBase {
 		super(type,indexdata);
 	}
 	
-	public FileBlock parseFrom(byte buf[]) throws InvalidProtocolBufferException {
+	public FileBlock parseData(byte buf[]) throws InvalidProtocolBufferException {
 		FileBlock out = FileBlock.newInstance(type, indexdata);
 		Fileformat.Blob blob = Fileformat.Blob.parseFrom(buf);
 		if (blob.hasRaw()) {
@@ -63,7 +63,7 @@ public class FileBlockReference extends FileBlockBase {
 			((FileInputStream)input).getChannel().position(data_offset);
 			byte buf[] = new byte[getDatasize()];
 			((DataInputStream)input).readFully(buf);
-			return parseFrom(buf);
+			return parseData(buf);
 		} else {
 			throw new Error("Random access binary reads require seekability");
 		}

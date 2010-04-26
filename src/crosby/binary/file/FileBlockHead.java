@@ -48,6 +48,6 @@ public class FileBlockHead extends FileBlockReference {
 		DataInputStream datinput = new DataInputStream(input);
 		byte buf[] = new byte[getDatasize()];
 		datinput.readFully(buf);
-		return parseFrom(buf);
+		return parseData(buf);
 	}
 }
