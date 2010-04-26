@@ -74,10 +74,11 @@ public class OsmosisSerializer extends BinarySerializer implements Sink {
 	}	
 
 	class NodeGroup extends Prim<Node> implements PrimGroupWriterInterface {
-		public void serialize2(Osmformat.PrimitiveBlock.Builder parentbuilder) {
-			serializeNonDense(parentbuilder,contents);
-		}
 
+		/** Adaptively switch between dense format and non-dense format for a group of nodes.
+		 * 
+		 * @param parentbuilder
+		 */
 		public void serialize(Osmformat.PrimitiveBlock.Builder parentbuilder) {
 			// Smarter serializer. Supports 'dense ndoes'
 			ArrayList<Node> densenodes = new ArrayList<Node>();
