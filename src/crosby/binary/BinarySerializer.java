@@ -44,7 +44,7 @@ public class BinarySerializer {
 	protected int batch_limit = 4000;
 
 	// Parmaters affecting the output.
-	public boolean encode_ints_specially = true;
+
 	protected int granularity=100;
 	protected int date_granularity=1000;
 	protected boolean omit_metadata = false;
