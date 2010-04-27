@@ -39,7 +39,7 @@ public class OsmosisSerializerFactory extends TaskManagerFactory {
 				BlockOutputStream output = new BlockOutputStream(
 						new FileOutputStream(file));
 				task = new OsmosisSerializer(output);
-				task.configBatchLimit(this.getIntegerArgument(taskConfig,"batchlimit",4000));
+				task.configBatchLimit(this.getIntegerArgument(taskConfig,"batchlimit",8000));
 				task.configOmit(
 						this.getBooleanArgument(taskConfig, "omitmetadata", false));
 				task.configGranularity(this.getIntegerArgument(taskConfig,"granularity",100));
