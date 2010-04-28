@@ -28,6 +28,7 @@
     </publications>
     
     <dependencies>
+
         <dependency org="postgresql" name="postgresql" rev="8.3-603.jdbc4" conf="compile->default"/>
         <dependency org="net.sf.jpf" name="jpf" rev="1.5" conf="compile->default"/>
         <dependency org="org.codehaus.woodstox" name="woodstox-core-lgpl" rev="4.0.3" conf="default->default">
@@ -50,5 +51,8 @@
         
         <dependency org="junit" name="junit" rev="4.4" conf="test->default"/>
     	<dependency org="checkstyle" name="checkstyle" rev="5.0-beta01" conf="test->default"/>
+
+<!--	<dependency org="com.google.protobuf" name="protobuf-java" rev="2.1.0" /> -->
+
     </dependencies>
 </ivy-module>

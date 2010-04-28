@@ -21,6 +21,7 @@
 		<fileset dir="lib/default" includes="**/*.jar"/>
 	</path>
 	<path id="classpath.test">
+
 		<fileset dir="lib/test" includes="**/*.jar"/>
 	</path>
 	
