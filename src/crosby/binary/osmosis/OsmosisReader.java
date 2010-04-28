@@ -10,28 +10,26 @@ import crosby.binary.file.BlockInputStream;
 
 public class OsmosisReader implements RunnableSource {
 
-	OsmosisReader(InputStream input) {
-		this.input = input;
-		parser = new OsmosisBinaryParser();
-	}
-	
-	
-	@Override
-	public void setSink(Sink sink) {
-		parser.setSink(sink);
-	}
+    OsmosisReader(InputStream input) {
+        this.input = input;
+        parser = new OsmosisBinaryParser();
+    }
 
-	@Override
-	public void run() {
-		try {
-			(new BlockInputStream(input,parser)).process();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    @Override
+    public void setSink(Sink sink) {
+        parser.setSink(sink);
+    }
 
-	
-	InputStream input;
-	OsmosisBinaryParser parser;
+    @Override
+    public void run() {
+        try {
+            (new BlockInputStream(input, parser)).process();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    InputStream input;
+    OsmosisBinaryParser parser;
 }
