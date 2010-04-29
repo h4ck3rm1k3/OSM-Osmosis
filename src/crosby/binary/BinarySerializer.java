@@ -20,7 +20,7 @@ import crosby.binary.file.FileBlock;
 public class BinarySerializer {
 
     /**
-     * Interface used to write a gropu of primitives. One of these for each
+     * Interface used to write a group of primitives. One of these for each
      * group
      */
     protected interface PrimGroupWriterInterface {

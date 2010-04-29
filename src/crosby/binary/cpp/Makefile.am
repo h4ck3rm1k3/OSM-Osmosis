@@ -48,7 +48,7 @@ endif
 
 AM_CXXFLAGS = $(NO_OPT_CXXFLAGS) $(PROTOBUF_OPT_FLAG)
 
-AM_LDFLAGS = $(PTHREAD_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_CFLAGS) -L/usr/local/lib/
 
 # Not sure why these don't get cleaned automatically.
 clean-local:
@@ -58,6 +58,7 @@ nobase_include_HEADERS =                                       \
   osmformat.pb.h \
   fileformat.pb.h
 
+
 lib_LTLIBRARIES =  libosmprotobuf.la 
 libosmprotobuf_la_LIBADD = /usr/local/lib/libprotobuf.la 
 libosmprotobuf_la_LDFLAGS = -version-info 6:0:0 -export-dynamic -no-undefined
@@ -66,3 +67,6 @@ libosmprotobuf_la_SOURCES =                                       \
   fileformat.pb.cc                            
 
 
+bin_PROGRAMS = osmprotoread
+osmprotoread_LDADD =  /usr/local/lib/libprotobuf.la libosmprotobuf.la 
+osmprotoread_SOURCES = osmreadmain.cc
