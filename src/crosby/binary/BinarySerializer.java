@@ -83,7 +83,7 @@ public class BinarySerializer {
     long debug_bytes = 0;
 
     public void processBatch() {
-        // System.out.format("Batch of %d groups: ",groups.size());
+        System.out.format("Batch of %d groups: ",groups.size());
         if (groups.size() == 0)
             return;
         Osmformat.PrimitiveBlock.Builder primblock = Osmformat.PrimitiveBlock
@@ -104,14 +104,14 @@ public class BinarySerializer {
 
         Osmformat.PrimitiveBlock message = primblock.build();
 
-        // System.out.println(message);
+        System.out.println(message);
         debug_bytes += message.getSerializedSize();
-        if (false) // TODO: Prettyprinted output.
+	//        if (false) // TODO: Prettyprinted output.
             System.out.format("    =======>  %.2f / %.2f   (%dk)\n", message
                     .getSerializedSize() / 1024.0, debug_bytes / 1024 / 1024.0,
                     total_entities / 1000);
         // if (message.getSerializedSize() > 1000000)
-        // System.out.println(message);
+         System.out.println(message);
 
         try {
             output.write(FileBlock.newInstance("OSMData", message
@@ -124,7 +124,7 @@ public class BinarySerializer {
             batch_size = 0;
             groups.clear();
         }
-        // System.out.format("\n");
+         System.out.format("\n");
     }
 
     public long mapRawDegrees(double degrees) {

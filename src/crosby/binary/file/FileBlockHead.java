@@ -32,10 +32,10 @@ public class FileBlockHead extends FileBlockReference {
     static FileBlockHead readHead(InputStream input) throws IOException {
         DataInputStream datinput = new DataInputStream(input);
         int headersize = datinput.readInt();
-        // System.out.format("Header size %d %x\n",headersize,headersize);
+        System.out.format("Header size %d %x\n",headersize,headersize);
         byte buf[] = new byte[headersize];
         datinput.readFully(buf);
-        // System.out.format("Read buffer for header of %d bytes\n",buf.length);
+         System.out.format("Read buffer for header of %d bytes\n",buf.length);
         Fileformat.FileBlockHeader header = Fileformat.FileBlockHeader
                 .parseFrom(buf);
         FileBlockHead fileblock = new FileBlockHead(header.getType(), header

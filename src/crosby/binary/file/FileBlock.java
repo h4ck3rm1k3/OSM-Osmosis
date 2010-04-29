@@ -64,7 +64,7 @@ public class FileBlock extends FileBlockBase {
 
         Fileformat.Blob.Builder blobbuilder = Fileformat.Blob.newBuilder();
         if (flags == CompressFlags.NONE) {
-            blobbuilder.setRaw(data);
+            blobbuilder.setRaw(data); // set the data in the blog
         } else {
             blobbuilder.setRawSize(data.size());
             if (flags == CompressFlags.DEFLATE)
@@ -72,21 +72,27 @@ public class FileBlock extends FileBlockBase {
             else
                 assert false : "TODO"; // TODO
         }
-        Fileformat.Blob blob = blobbuilder.build();
+        Fileformat.Blob blob = blobbuilder.build(); // create the blob of data
 
-        builder.setDatasize(blob.getSerializedSize());
-        Fileformat.FileBlockHeader message = builder.build();
-        int size = message.getSerializedSize();
+        builder.setDatasize(blob.getSerializedSize()); // put the blob in the header
+        Fileformat.FileBlockHeader message = builder.build(); // create a message from the header
+        int size = message.getSerializedSize(); // get the size of the header (13 for this examples)
 
-        // System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
-        // size,message.getSerializedSize(),blob.getSerializedSize());
+	//Outputed header size 13 bytes, header of 13 bytes, and blob of 32 bytes
+        System.out.format("Outputed header size %d bytes, header of %d bytes, and blob of %d bytes\n",
+			  size,message.getSerializedSize(),blob.getSerializedSize());
+
+	// write the size to the stream (4 bytes)
         (new DataOutputStream(outwrite)).writeInt(size);
+
+	// write the FileBlockHeader to the file
         message.writeTo(outwrite);
         long offset = -1;
 
         if (outwrite instanceof FileOutputStream)
             offset = ((FileOutputStream) outwrite).getChannel().position();
 
+	// write the blob to the file
         blob.writeTo(outwrite);
         return FileBlockPosition.newInstance(this, offset, size);
     }
@@ -96,7 +102,7 @@ public class FileBlock extends FileBlockBase {
             throws IOException {
         FileBlockHead fileblock = FileBlockHead.readHead(input);
         if (callback.skipBlock(fileblock)) {
-            // System.out.format("Attempt to skip %d bytes\n",header.getDatasize());
+             System.out.format("Attempt to skip %d bytes\n",fileblock.getDatasize());
             fileblock.skipContents(input);
         } else {
             callback.handleBlock(fileblock.readContents(input));
