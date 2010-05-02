@@ -14,36 +14,22 @@
 using namespace google::protobuf::io;
 using namespace std;
 
-// // Iterates though all data in the osmfile and prints info about them.
-// void ListPeople(const tutorial::AddressBook& address_book) {
-//   for (int i = 0; i < address_book.person_size(); i++) {
-//     const tutorial::Person& person = address_book.person(i);
+template <class T> void dumpData(T & item);
 
-//     cout << "Person ID: " << person.id() << endl;
-//     cout << "  Name: " << person.name() << endl;
-//     if (person.has_email()) {
-//       cout << "  E-mail address: " << person.email() << endl;
-//     }
+void dumpDataP(const char * p)
+{
+  return ; // no debug
+  while (*p)
+    {
+      cerr << hex ;
+      cerr << setfill('0');
+      cerr << "RawByte: " << (int)*p << endl;
+      p++;
+    }
 
-//     for (int j = 0; j < person.phone_size(); j++) {
-//       const tutorial::Person::PhoneNumber& phone_number = person.phone(j);
+}
 
-//       switch (phone_number.type()) {
-//         case tutorial::Person::MOBILE:
-//           cout << "  Mobile phone #: ";
-//           break;
-//         case tutorial::Person::HOME:
-//           cout << "  Home phone #: ";
-//           break;
-//         case tutorial::Person::WORK:
-//           cout << "  Work phone #: ";
-//           break;
-//       }
-//       cout << phone_number.number() << endl;
-//     }
-//   }
-// }
-
+// generic dumper... only use for debugging, because it reads ahead
 void dumpObject (CodedInputStream *input)
 {
   ::google::protobuf::uint32 tag;
@@ -58,6 +44,7 @@ void dumpObject (CodedInputStream *input)
 
 }
 
+// generic stream dumper, 
 void dumpsteam(const char * filename)
 {
   fstream inputf(filename, ios::in | ios::binary);
@@ -104,20 +91,14 @@ template <class T> void readFile(const char * filename, const char * name)
     }
 }
 
-void outputBlob(Blob & Item)
+
+template <> void dumpData(Blob & Item)
 {
       cerr << "OUTPUT Blob." << endl;
       cerr << "Byte Size " << Item.ByteSize() << endl;
       cerr << "Raw " << Item.has_raw() << endl;
-      cerr << "Raw " << Item.raw() << endl;
-      const char * p= Item.raw().c_str();
-      while (*p)
-	{
-	  cerr << hex ;
-	  cerr << setfill('0');
-	  cerr << "RawByte: " << (int)*p << endl;
-	  p++;
-	}
+      //      cerr << "Raw " << Item.raw() << endl;
+      dumpDataP(Item.raw().c_str());
       cerr << "RawSize " << Item.has_raw_size() << endl;
       cerr << "ZlibData " << Item.has_zlib_data() << endl;
       cerr << "LZMData " << Item.has_lzma_data() << endl;
@@ -125,38 +106,22 @@ void outputBlob(Blob & Item)
 }
 
 
+template <> void dumpData(StringTable const & str){
+  cerr << "String Table" << endl;
+}
+template <> void dumpData(PrimitiveGroup const & str){
+  cerr << "PrimitiveGroup" << endl;
+}
+template <> void dumpData(FileBlockHeader & Item){
+  cerr << "FileBlockHeader" << endl;
+  cerr << "type" << Item.type() << endl;
+  cerr << "indexdata" <<  Item.indexdata() << endl;
+  cerr << "datasize" << Item.datasize() << endl;
 
-void readFileBlockBlob(CodedInputStream *input)
-{
-
-  //google::protobuf::uint32 magic_number;
-  //input->ReadLittleEndian32(&magic_number);
-  //cerr << "magic_number " << magic_number << endl;
-
-  Blob Item;
-  //      FileBlockHeader Item;
-  //  PrimitiveBlock Item;
-  //  google::protobuf::uint32 magic_number;
-  //  input->ReadLittleEndian32(&magic_number);
-  //  cerr << "magic_number " << magic_number << endl;
-      //           dumpObject(input);      
-  if (!Item.ParseFromCodedStream(input)) 
-    {
-      cerr << "Failed to parse file with type Primitives" << endl;
-
-    }
-  else
-    {
-      cerr << " parse file OK Primitives." << endl;
-              outputBlob(Item);
-
-    }
 }
 
-// Blob Item; 
 
-
-void dumpHeaderBlock(HeaderBlock & hdr)
+template <> void dumpData(HeaderBlock & hdr)
 {
   cerr << "BBOX"  << endl;
   cerr << hdr.bbox().left() << endl;
@@ -165,10 +130,27 @@ void dumpHeaderBlock(HeaderBlock & hdr)
   cerr << hdr.bbox().bottom() << endl;
 }
 
-void readFileBlobHeaderBlock(ifstream & inputf, int datasize)
+template <> void dumpData(PrimitiveBlock & blk)
 {
-  Blob Item;
-  HeaderBlock Contents;
+  cerr << "Primitive Block"  << endl;
+  dumpData(blk.stringtable());;
+  cerr << blk.primitivegroup_size()<< endl;
+  cerr << blk.granularity()<< endl;
+  cerr << blk.date_granularity()<< endl;
+  
+  for (int i=0; i < blk.primitivegroup_size(); i++)
+    {
+      dumpData(blk.primitivegroup(i));
+    }
+
+}
+
+template <class TContents> void readHeaderBlock(FileBlockHeader & Item, ifstream & inputf)
+{
+  dumpData(Item);
+  //  readFileBlobHeaderBlock(inputf, Item.datasize());
+  Blob ItemBlob;
+  TContents Contents;
   cerr << "at position:"   << hex << setfill('X')  << inputf.tellg() << endl;
 
   if (!inputf)
@@ -176,7 +158,7 @@ void readFileBlobHeaderBlock(ifstream & inputf, int datasize)
       cerr << "before read blob file, fail"<< endl;
       return;
     }
-
+  int datasize=Item.datasize();
   char * buffer = new char[datasize+1];
   inputf.read(buffer, datasize);
   if (!inputf)
@@ -187,66 +169,41 @@ void readFileBlobHeaderBlock(ifstream & inputf, int datasize)
 
   buffer[datasize]=0;// null terminated
 
-  const char * p= buffer;
-  while (*p)
-    {
-      cerr << hex ;
-      cerr << setfill('0');
-      cerr << "RawByte: " << (int)*p << endl;
-      p++;
-    }
+  dumpDataP(buffer);
+
   cerr << "at position:"  << hex << setfill('X') << inputf.tellg() << endl;
   CodedInputStream tempStream((const google::protobuf::uint8*)buffer, datasize);
-  if (!Item.ParseFromCodedStream(&tempStream)) 
+  if (!ItemBlob.ParseFromCodedStream(&tempStream)) 
     {
       cerr << "Failed to parse file with Blob" << endl;    
     }
   else
     {
       cerr << " parse file OK Blob." << endl;
-      outputBlob(Item);      
-      const char * p= Item.raw().c_str();
-      int s2 =Item.raw_size();
+      dumpData(ItemBlob);      
+      const char * p= ItemBlob.raw().c_str();
+      int s2 =ItemBlob.raw_size();
       int s = strlen(p);
       
-      cerr << "got block" << p << " with length " << s <<  " and official length "<< s2 << endl;
+      //cerr << "got block" << p << " with length " << s <<  " and official length "<< s2 << endl;
       CodedInputStream tempStream((const google::protobuf::uint8*)p,s);
       //      dumpObject (&tempStream);
       if (Contents.ParseFromCodedStream(&tempStream)) 
 	{
-	  dumpHeaderBlock(Contents);
+	  dumpData(Contents);
 	}
       else
 	{
 	  cerr << "could not read header block" << endl;
-	}
-	  
+	}	  
     }
   delete [] buffer;
+
 }
 
-void outputHeader(FileBlockHeader & Item, ifstream & inputf)
+template <class T> int readFileBlock(ifstream & inputf)
 {
-  cerr << "type" << Item.type() << endl;
-  cerr << "indexdata" <<  Item.indexdata() << endl;
-  cerr << "datasize" << Item.datasize() << endl;
-
-  readFileBlobHeaderBlock(inputf, Item.datasize());
-}
-
-
-
-void readFileHeader(const char * filename)
-{
-  FileBlockHeader Item;
- 
-  ifstream inputf(filename, ios::in | ios::binary);
-  
-  if (!inputf)
-    {
-      cerr << "cannot open file" << filename << endl;
-      exit (-1);
-    }
+  FileBlockHeader Item; 
   int magic_number_=-1;
   cerr << "at position:"  << hex << setfill('X')  << inputf.tellg() << endl;
   inputf.read(reinterpret_cast < char * > (&magic_number_),4);
@@ -260,18 +217,12 @@ void readFileHeader(const char * filename)
       char * buffer = new char[magic_number+1];
       inputf.read(buffer, magic_number);
       buffer[magic_number]=0;// null terminated
-      
+      int status =0;
       if (inputf)
 	{
 	  const char * p= buffer;
-	  while (*p)
-	    {
-	      cerr << hex ;
-	      cerr << setfill('0');
-	      cerr << "RawByte: " << (int)*p << endl;
-	      p++;
-	    }
-	  
+	  dumpDataP(p);
+  
 	  cerr << "at position:" << hex << setfill('X') << inputf.tellg() << endl;
 	  
 	  CodedInputStream tempStream((const google::protobuf::uint8*)buffer, magic_number);
@@ -282,17 +233,20 @@ void readFileHeader(const char * filename)
 	  else
 	    {
 	      cerr << "Read Header" << endl;
-	      outputHeader(Item, inputf);
-	    }  
-	  
+	      readHeaderBlock<T>(Item, inputf);
+	      status =1;
+	    }	  
 	}
       delete [] buffer;
+      return status;
     }
   else
     {
       cerr << "Could not read buffer" << endl;
+      return 0;
     }
 }
+
 
 #define TRY(X) readFile<X >(argv[1], # X  "");
 int main(int argc, char* argv[]) 
@@ -305,7 +259,24 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  readFileHeader(argv[1]);
+  ifstream inputf(argv[1], ios::in | ios::binary);
+  
+  if (!inputf)
+    {
+      cerr << "cannot open file" << argv[1] << endl;
+      exit (-1);
+    }
+
+  if (readFileBlock<FileBlockHeader>(inputf))
+    {
+      // now read some blocks
+      while (readFileBlock<PrimitiveBlock>(inputf))
+	{
+	  cerr << "Okey!";
+	}
+
+    }
+  
   //  TRY(google::protobuf::Message)
   //  TRY(HeaderBlock)
   //    TRY(FileHeader)
