@@ -196,25 +196,23 @@ void readFileBlobHeaderBlock(ifstream & inputf, int datasize)
       p++;
     }
   cerr << "at position:"  << hex << setfill('X') << inputf.tellg() << endl;
-  
   CodedInputStream tempStream((const google::protobuf::uint8*)buffer, datasize);
-  
   if (!Item.ParseFromCodedStream(&tempStream)) 
     {
-      cerr << "Failed to parse file with Blob" << endl;
-      
+      cerr << "Failed to parse file with Blob" << endl;    
     }
   else
     {
       cerr << " parse file OK Blob." << endl;
-      outputBlob(Item);
-      
+      outputBlob(Item);      
       const char * p= Item.raw().c_str();
+      int s2 =Item.raw_size();
       int s = strlen(p);
-      cerr << "got block" << p << " with length " << s  << endl;
-
+      
+      cerr << "got block" << p << " with length " << s <<  " and official length "<< s2 << endl;
       CodedInputStream tempStream((const google::protobuf::uint8*)p,s);
-      if (!Contents.ParseFromCodedStream(&tempStream)) 
+      //      dumpObject (&tempStream);
+      if (Contents.ParseFromCodedStream(&tempStream)) 
 	{
 	  dumpHeaderBlock(Contents);
 	}
