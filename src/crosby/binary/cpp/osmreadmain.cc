@@ -15,7 +15,6 @@ using namespace google::protobuf::io;
 using namespace std;
 
 template <class T> void dumpData(T & item);
-
 void dumpDataP(const char * p)
 {
   return ; // no debug
@@ -28,6 +27,157 @@ void dumpDataP(const char * p)
     }
 
 }
+
+template <> void dumpData(Blob & Item)
+{
+      cout << "<Blob>" << endl;
+      cout << "Byte Size " << Item.ByteSize() << endl;
+      cout << "Raw " << Item.has_raw() << endl;
+      //      cout << "Raw " << Item.raw() << endl;
+      dumpDataP(Item.raw().c_str());
+      cout << "RawSize " << Item.has_raw_size() << endl;
+      cout << "ZlibData " << Item.has_zlib_data() << endl;
+      cout << "LZMData " << Item.has_lzma_data() << endl;
+      cout << "BZip " << Item.has_bzip2_data() << endl;
+      cout << "</Blob>" << endl;
+}
+
+template <> void dumpData(Info const&n) {
+  cout << "<info>" << endl;
+  cout << "version:" << n.version()    << endl;
+  cout << "timestamp:" << n.timestamp()    << endl;
+  cout << "changeset:" << n.changeset()    << endl; 
+  cout << "uid:" << n.uid()    << endl; 
+  cout << "user_sid:" << n.user_sid()    << endl; 
+  cout << "</info>" << endl;
+}
+
+template <> void dumpData(DenseNodes const&n) {
+  cout << "<densenodes>" << endl;
+  for(int i=0; i <n.id_size(); i++)    {  
+    cout << "ID:" << n.id(i)    << endl;
+    cout << "lat:"  << n.lat(i)  <<endl;
+    cout << "lon:" << n.lon(i)  <<endl;
+
+    dumpData(n.info(i));
+  }
+  cout << "</densenodes>" << endl;
+  //  for(int i=0; i <n.info_size(); i++)    {    }
+  
+}
+template <> void dumpData(Node const& n){
+  cout << "<node>" << endl;
+  cout << "ID:" << n.id()    << endl;
+  cout << "lat:"  << n.lat()  <<endl;
+  cout << "lon:" << n.lon()  <<endl;
+  dumpData(n.info());
+  for(int i=0; i <n.keys_size(); i++)    {  
+    cout << "key:" << n.keys(i)  <<endl;
+    cout << "val:" << n.vals(i)  <<endl;
+  }
+  cout << "</node>" << endl;
+}
+
+template <> void dumpData(Way const& n){
+  cout << "<way>" << endl;
+  cout << "ID:" << n.id()    << endl;
+  dumpData(n.info());
+  for(int i=0; i <n.refs_size(); i++)    {  
+    cout << "ref:" << n.refs(i)  ;
+  }
+  cout << "</way>" << endl;
+}
+
+template <> void dumpData(Relation const& n){
+  cout << "<relation>" << endl;
+  cout << "ID:" << n.id()    << endl;
+
+  dumpData(n.info());
+  for(int i=0; i <n.keys_size(); i++)    {  
+    cout << "key:" << n.keys(i)  <<endl;
+    cout << "val:" << n.vals(i)  <<endl;
+  }
+
+  for(int i=0; i <n.roles_sid_size(); i++)    {  
+    cout << "role_sid:" << n.roles_sid(i)  <<endl;
+    cout << "memberid:" << n.memids(i)  <<endl;
+    cout << "type:" << n.types(i)  <<endl;
+  }
+  cout << "</relation>" << endl;
+}
+
+template <> void dumpData( BBox const & bbox)
+{
+  cout << "<bbox>" << endl;
+  cout << bbox.left() << endl;
+  cout << bbox.right() << endl;
+  cout << bbox.top() << endl;
+  cout << bbox.bottom() << endl;
+  cout << "</bbox>" << endl;
+}
+
+template <> void dumpData(ChangeSet const& n){
+  cout << "<changeset>" << endl;
+  cout << "ID:" << n.id()    << endl;
+  cout << "created_id:" << n.created_at()    << endl;
+  cout << "closetime_delta:" << n.closetime_delta()    << endl;
+  cout << "open:" << n.open()    << endl;
+  dumpData(n.bbox());
+  dumpData(n.info());
+  for(int i=0; i <n.keys_size(); i++)    {  
+    cout << "key:" << n.keys(i)  <<endl;
+    cout << "val:" << n.vals(i)  <<endl;
+  }
+  cout << "</changeset>" << endl;
+}
+
+template <> void dumpData(StringTable const & str){
+  cout << "String Table" << endl;
+}
+
+//template <> void dumpField(PrimitiveGroup const & str){}
+template <> void dumpData(PrimitiveGroup const & n){
+  cout << "<PrimitiveGroup>" << endl;
+  dumpData(n.dense());
+
+  for(int i=0; i <n.nodes_size(); i++)    {  dumpData(n.nodes(i));    }
+  for(int i=0; i <n.ways_size(); i++)    {  dumpData(n.ways(i));    }
+  for(int i=0; i <n.relations_size(); i++)    {  dumpData(n.relations(i));    }
+  for(int i=0; i <n.changesets_size(); i++)    {  dumpData(n.changesets(i));    }
+  cout << "</PrimitiveGroup>" << endl;
+
+}
+template <> void dumpData(FileBlockHeader & Item){
+  cout << "<FileBlockHeader>" << endl;
+  cout << "type" << Item.type() << endl;
+  cout << "indexdata" <<  Item.indexdata() << endl;
+  cout << "datasize" << Item.datasize() << endl;
+  cout << "</FileBlockHeader>" << endl;
+}
+
+
+template <> void dumpData(HeaderBlock & hdr)
+{
+  cout << "<header>"  << endl;
+  dumpData(hdr.bbox());
+  cout << "</header>"  << endl;
+}
+
+template <> void dumpData(PrimitiveBlock & blk)
+{
+  cout << "<PrimitiveBlock>"  << endl;
+  dumpData(blk.stringtable());;
+  cout << blk.primitivegroup_size()<< endl;
+  cout << blk.granularity()<< endl;
+  cout << blk.date_granularity()<< endl;
+  
+  for (int i=0; i < blk.primitivegroup_size(); i++)
+    {
+      dumpData(blk.primitivegroup(i));
+    }
+  cout << "</PrimitiveBlock>"  << endl;
+}
+
 
 // generic dumper... only use for debugging, because it reads ahead
 void dumpObject (CodedInputStream *input)
@@ -91,59 +241,6 @@ template <class T> void readFile(const char * filename, const char * name)
     }
 }
 
-
-template <> void dumpData(Blob & Item)
-{
-      cerr << "OUTPUT Blob." << endl;
-      cerr << "Byte Size " << Item.ByteSize() << endl;
-      cerr << "Raw " << Item.has_raw() << endl;
-      //      cerr << "Raw " << Item.raw() << endl;
-      dumpDataP(Item.raw().c_str());
-      cerr << "RawSize " << Item.has_raw_size() << endl;
-      cerr << "ZlibData " << Item.has_zlib_data() << endl;
-      cerr << "LZMData " << Item.has_lzma_data() << endl;
-      cerr << "BZip " << Item.has_bzip2_data() << endl;
-}
-
-
-template <> void dumpData(StringTable const & str){
-  cerr << "String Table" << endl;
-}
-template <> void dumpData(PrimitiveGroup const & str){
-  cerr << "PrimitiveGroup" << endl;
-}
-template <> void dumpData(FileBlockHeader & Item){
-  cerr << "FileBlockHeader" << endl;
-  cerr << "type" << Item.type() << endl;
-  cerr << "indexdata" <<  Item.indexdata() << endl;
-  cerr << "datasize" << Item.datasize() << endl;
-
-}
-
-
-template <> void dumpData(HeaderBlock & hdr)
-{
-  cerr << "BBOX"  << endl;
-  cerr << hdr.bbox().left() << endl;
-  cerr << hdr.bbox().right() << endl;
-  cerr << hdr.bbox().top() << endl;
-  cerr << hdr.bbox().bottom() << endl;
-}
-
-template <> void dumpData(PrimitiveBlock & blk)
-{
-  cerr << "Primitive Block"  << endl;
-  dumpData(blk.stringtable());;
-  cerr << blk.primitivegroup_size()<< endl;
-  cerr << blk.granularity()<< endl;
-  cerr << blk.date_granularity()<< endl;
-  
-  for (int i=0; i < blk.primitivegroup_size(); i++)
-    {
-      dumpData(blk.primitivegroup(i));
-    }
-
-}
 
 template <class TContents> void readHeaderBlock(FileBlockHeader & Item, ifstream & inputf)
 {
