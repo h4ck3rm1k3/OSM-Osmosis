@@ -332,6 +332,7 @@ template <class T> int readFileBlock(ifstream * inputf)
       cerr << "readFileBlock3 at position:" << inputf->tellg() << endl;
       cerr << "read : "<< raw_input.ByteCount() << endl;
       CodedInputStream input(&raw_input);// this reads a big buffer in
+      input.PushLimit(magic_number);
       cerr << "read : "<< raw_input.ByteCount() << endl;
       cerr << "readFileBlock4 at position:" << inputf->tellg() << endl;
       //      char * buffer = new char[magic_number+1];
@@ -356,6 +357,8 @@ template <class T> int readFileBlock(ifstream * inputf)
 	      status = readHeaderBlock<T>(Item, &input);
 	    }	  
 	}
+
+      input.PopLimit(magic_number);
       //      delete [] buffer;
       return status;
     }
