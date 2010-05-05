@@ -199,27 +199,6 @@ void dumpObject (CodedInputStream *input)
 
 }
 
-// generic stream dumper, 
-void dumpsteam(const char * filename)
-{
-  fstream inputf(filename, ios::in | ios::binary);
-
-  //  ::google::protobuf::io::CodedInputStream input;
-  //int fd = open("myfile", O_RDONLY);
-  ZeroCopyInputStream* raw_input = new  IstreamInputStream(& inputf);
-
-  CodedInputStream * input = new CodedInputStream(raw_input);
-
-  //Skip(int count)
-    google::protobuf::uint32 magic_number;
-    input->ReadLittleEndian32(&magic_number);
-    cerr << "magic_number " << magic_number << endl;
-    dumpObject(input);
-
-  delete input;
-  delete raw_input;
-}
-
 template <class T> void readFile(const char * filename, const char * name)
 {
   // Read the existing address book.
@@ -229,20 +208,32 @@ template <class T> void readFile(const char * filename, const char * name)
   ZeroCopyInputStream* raw_input = new  IstreamInputStream(& inputf);
   CodedInputStream * input = new CodedInputStream(raw_input);
 
-  //Skip(int count)
     google::protobuf::uint32 magic_number;
-    input->ReadLittleEndian32(&magic_number);
-    cerr << "magic_number " << magic_number << endl;
-
-  if (!Item.ParseFromCodedStream(input)) {
-    cerr << "Failed to parse file with type " << name << endl;
-    //    dumpsteam(filename);
-    // exit (-1);
-  }
-  else
-    {
-      cerr << " parse file OK."  << name << endl;
-    }
+    if (input->ReadLittleEndian32(&magic_number))
+      {
+	cerr << "magic_number " << magic_number << endl;
+	
+	if (magic_number < 1000)
+	  {
+	    if (!Item.ParseFromCodedStream(input)) {
+	      cerr << "Failed to parse file with type " << name << endl;
+	      
+	    }
+	    else
+	      {
+		cerr << " parse file OK."  << name << endl;
+	      }
+	  }
+	else
+	  {
+	    cerr << " magic number too big!" << endl;
+	  }
+	
+      }
+    else
+      {
+	cerr << " cannot read magic number"  << endl;
+      }
 }
 
 
@@ -277,12 +268,12 @@ template <class TContents> int readHeaderBlock(FileBlockHeader & Item, CodedInpu
       dumpData(ItemBlob);      
       const char * p= ItemBlob.raw().c_str();
 
-      int s2 =ItemBlob.raw_size();	  
-      cerr << "got block w official length "<< s2 << endl;
+      //      int s2 =ItemBlob.raw_size();	  
+      //      cerr << "got block w official length "<< s2 << endl;
 
       if (p)
 	{
-	  int s = strlen(p);
+	  int s = ItemBlob.raw().length();
 	  cerr << "got string length "<< s << endl;
 	  if (s)
 	    {
@@ -324,25 +315,39 @@ template <class T> int readFileBlock(CodedInputStream * input)
 {
   FileBlockHeader Item; 
   google::protobuf::uint32 magic_number_=-1;
-
-  input->ReadLittleEndian32(&magic_number_);
-  uint32_t  magic_number = ntohl(magic_number_);
-  cerr << "magic_number " << magic_number << endl;
-  ::google::protobuf::io::CodedInputStream::Limit oldlimit=input->PushLimit(magic_number);
   int status =0;
-  
-  if (!Item.ParseFromCodedStream(input)) 
+
+  if (input->ReadLittleEndian32(&magic_number_))
     {
-      cerr << "Failed to parse file with type Blob" << endl;
+      uint32_t  magic_number = ntohl(magic_number_);
+      cerr << "blob magic_number " << magic_number << endl;
+
+      if (magic_number < 1000)
+	{
+	  ::google::protobuf::io::CodedInputStream::Limit oldlimit=input->PushLimit(magic_number);
+	  
+	  if (!Item.ParseFromCodedStream(input)) 
+	    {
+	      cerr << "Failed to parse file with type Blob" << endl;
+	    }
+	  else
+	    {
+	      cerr << "Read Header" << endl;
+	      input->PopLimit(oldlimit); // we need to read past the first block
+	      status = readHeaderBlock<T>(Item, input);
+	      
+	    }
+	}
+      else
+	{
+	  cerr << "magic number too big" << endl;
+	}
+      
     }
   else
     {
-      cerr << "Read Header" << endl;
-      input->PopLimit(oldlimit); // we need to read past the first block
-      status = readHeaderBlock<T>(Item, input);
-      
-    }	  
-
+      cerr << "Failed to read length of blob" << endl;
+    }
 
   return status;
 }
