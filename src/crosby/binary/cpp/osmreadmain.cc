@@ -33,7 +33,7 @@ template <> void dumpData(Blob & Item)
       cout << "<Blob>" << endl;
       cout << "Byte Size " << Item.ByteSize() << endl;
       cout << "Raw " << Item.has_raw() << endl;
-      //      cout << "Raw " << Item.raw() << endl;
+      cout << "Raw " << Item.raw() << endl;
       dumpDataP(Item.raw().c_str());
       cout << "RawSize " << Item.has_raw_size() << endl;
       cout << "ZlibData " << Item.has_zlib_data() << endl;
@@ -44,6 +44,7 @@ template <> void dumpData(Blob & Item)
 
 template <> void dumpData(Info const&n) {
   cout << "<info>" << endl;
+      cout << "Byte Size " << n.ByteSize() << endl;
   cout << "version:" << n.version()    << endl;
   cout << "timestamp:" << n.timestamp()    << endl;
   cout << "changeset:" << n.changeset()    << endl; 
@@ -54,6 +55,7 @@ template <> void dumpData(Info const&n) {
 
 template <> void dumpData(DenseNodes const&n) {
   cout << "<densenodes>" << endl;
+      cout << "Byte Size " << n.ByteSize() << endl;
   for(int i=0; i <n.id_size(); i++)    {  
     cout << "ID:" << n.id(i)    << endl;
     cout << "lat:"  << n.lat(i)  <<endl;
@@ -149,9 +151,10 @@ template <> void dumpData(PrimitiveGroup const & n){
 }
 template <> void dumpData(FileBlockHeader & Item){
   cout << "<FileBlockHeader>" << endl;
-  cout << "type" << Item.type() << endl;
-  cout << "indexdata" <<  Item.indexdata() << endl;
-  cout << "datasize" << Item.datasize() << endl;
+  cout << "bytesize:" << Item.ByteSize() << endl;
+  cout << "type:" << Item.type() << endl;
+  cout << "indexdata:" <<  Item.indexdata() << endl;
+  cout << "datasize:" << Item.datasize() << endl;
   cout << "</FileBlockHeader>" << endl;
 }
 
@@ -159,6 +162,7 @@ template <> void dumpData(FileBlockHeader & Item){
 template <> void dumpData(HeaderBlock & hdr)
 {
   cout << "<header>"  << endl;
+  cout << "Byte Size " << hdr.ByteSize() << endl;
   dumpData(hdr.bbox());
   cout << "</header>"  << endl;
 }
@@ -166,6 +170,7 @@ template <> void dumpData(HeaderBlock & hdr)
 template <> void dumpData(PrimitiveBlock & blk)
 {
   cout << "<PrimitiveBlock>"  << endl;
+  cout << "Byte Size " << blk.ByteSize() << endl;
   dumpData(blk.stringtable());;
   cout << blk.primitivegroup_size()<< endl;
   cout << blk.granularity()<< endl;
@@ -222,7 +227,6 @@ template <class T> void readFile(const char * filename, const char * name)
 
   fstream inputf(filename, ios::in | ios::binary);
   ZeroCopyInputStream* raw_input = new  IstreamInputStream(& inputf);
-
   CodedInputStream * input = new CodedInputStream(raw_input);
 
   //Skip(int count)
@@ -245,135 +249,103 @@ template <class T> void readFile(const char * filename, const char * name)
 template <class TContents> int readHeaderBlock(FileBlockHeader & Item, CodedInputStream * input)
 {
   dumpData(Item);
-  //  readFileBlobHeaderBlock(inputf, Item.datasize());
   Blob ItemBlob;
   TContents Contents;
-  //  cerr << "readHeaderBlock at position:"   << inputf->tellg() << endl;
- 
+
   int datasize=Item.datasize();
+
   if (!datasize)
     {
       cerr << "no data, fail"<< endl;
       return 0;
     }
 
-  //  IstreamInputStream internalis(inputf);
-  //  google::protobuf::uint8 * buffer = new google::protobuf::uint8[datasize+1];
-  //  inputf.read(buffer, datasize);
-  //  if (!inputf)
-  //    {
-  //      cerr << "could not read buffer, fail"<< endl;
-  //      return 0;
-  //    }
-  //  buffer[datasize]=0;// null terminated
-  //  int s3 = strlen(buffer);
-  //  dumpDataP(buffer);
+  cerr << "data size of the item is :"   << datasize << endl;
+  //input->PushLimit(datasize);
 
-  //  cerr << "got data of length "<< s3 << " datasize"<<  datasize <<  ", now at at position:" << inputf.tellg() << endl;
-  //  cerr << "datasize"<<  datasize <<  ", now at at position:" << inputf->tellg() << endl;
-  //  CodedInputStream tempStream(&internalis ); //(const google::protobuf::uint8*)buffer, datasize);
   if (!ItemBlob.ParseFromCodedStream(input)) 
     {
+      //  input->PopLimit(datasize); // we need to read past the first block
       cerr << "Failed to parse file with Blob" << endl;    
       return 0;
     }
   else
     {
+      //      input->PopLimit(datasize); // we need to read past the first block
+      //      input->PopLimit(datasize);
       cerr << " parse file OK Blob." << endl;
       dumpData(ItemBlob);      
       const char * p= ItemBlob.raw().c_str();
 
+      int s2 =ItemBlob.raw_size();	  
+      cerr << "got block w official length "<< s2 << endl;
+
       if (p)
 	{
 	  int s = strlen(p);
-	  CodedInputStream tempStream((const google::protobuf::uint8*)p,s);
-	  //      dumpObject (&tempStream);
-	  if (Contents.ParseFromCodedStream(&tempStream)) 
+	  cerr << "got string length "<< s << endl;
+	  if (s)
 	    {
-	      dumpData(Contents);
-	      //	      delete [] buffer;
-	      return 1;
+	      CodedInputStream tempStream((const google::protobuf::uint8*)p,s);
+	      if (Contents.ParseFromCodedStream(&tempStream)) 
+		{
+		  dumpData(Contents);
+		  //		  delete [] text;
+		  return 1;
+		}
+	      else
+		{
+		  cerr << "could not read header block" << endl;
+		  //		  delete [] text;
+		  return 0;
+		}	 
 	    }
 	  else
 	    {
-	      cerr << "could not read header block" << endl;
-	      //	      delete [] buffer;
-	      return 0;
-	    }	 
+	      cerr << "empty blob" << endl;
+	      //	      delete [] text;
+	      return 1;
+	    }
 	}
       else
 	{
 	  cerr << "could not read BLOB" << endl;
-	  int s2 =ItemBlob.raw_size();	  
-	  cerr << "got block w official length "<< s2 << endl;
-	  //	  delete [] buffer;
+//	  delete [] text;
 	  return 0;
 	}
     }
-  //  delete [] buffer;
+
+  //delete [] text;
   return -1;
 
 }
 
-template <class T> int readFileBlock(ifstream * inputf)
+template <class T> int readFileBlock(CodedInputStream * input)
 {
   FileBlockHeader Item; 
   google::protobuf::uint32 magic_number_=-1;
 
-  if (inputf)
-    {
-
-      cerr << "readFileBlock2 at position:" << inputf->tellg() << endl;
-      
-      IstreamInputStream raw_input(inputf);
-      cerr << "readFileBlock3 at position:" << inputf->tellg() << endl;
-      cerr << "read : "<< raw_input.ByteCount() << endl;
-      CodedInputStream input(&raw_input);// this reads a big buffer in
-
-      cerr << "readFileBlock at position:"  << inputf->tellg() << endl;
-      //  inputf->read(reinterpret_cast < char * > (&magic_number_),4);
-      
-      input.ReadLittleEndian32(&magic_number_);
-      uint32_t  magic_number = ntohl(magic_number_);
-      //input.ReadVarint32(&magic_number);
-      //
-      cerr << "magic_number " << magic_number << endl;
-      
-      input.PushLimit(magic_number);
-      cerr << "read : "<< raw_input.ByteCount() << endl;
-      cerr << "readFileBlock4 at position:" << inputf->tellg() << endl;
-      //      char * buffer = new char[magic_number+1];
-      //      inputf.read(buffer, magic_number);
-      //      buffer[magic_number]=0;// null terminated
-      int status =0;
-      if (inputf)
-	{
-	  //	  const char * p= buffer;
-	  //dumpDataP(p);
+  input->ReadLittleEndian32(&magic_number_);
+  uint32_t  magic_number = ntohl(magic_number_);
+  cerr << "magic_number " << magic_number << endl;
   
-	  cerr << "at position:" << inputf->tellg() << endl;
-	  
-	  //	  CodedInputStream tempStream( )//(const google::protobuf::uint8*)buffer, magic_number);
-	  if (!Item.ParseFromCodedStream(& input)) 
-	    {
-	      cerr << "Failed to parse file with type Blob" << endl;
-	    }
-	  else
-	    {
-	      cerr << "Read Header" << endl;
-	      status = readHeaderBlock<T>(Item, &input);
-	    }	  
-	}
-
-      input.PopLimit(magic_number);
-      //      delete [] buffer;
-      return status;
+  input->PushLimit(magic_number);
+  int status =0;
+  
+  if (!Item.ParseFromCodedStream(input)) 
+    {
+      cerr << "Failed to parse file with type Blob" << endl;
     }
   else
     {
-      cerr << "Could not read buffer" << endl;
-      return 0;
-    }
+      cerr << "Read Header" << endl;
+
+      status = readHeaderBlock<T>(Item, input);
+      //      input->PopLimit(magic_number); // we need to read past the first block
+    }	  
+
+
+  return status;
 }
 
 
@@ -396,10 +368,13 @@ int main(int argc, char* argv[])
       exit (-1);
     }
 
-  if (readFileBlock<HeaderBlock>(&inputf))
+  IstreamInputStream raw_input(&inputf);  
+  CodedInputStream input(&raw_input);// this reads a big buffer in
+
+  if (readFileBlock<HeaderBlock>(&input))
     {
       // now read some blocks
-      while (readFileBlock<PrimitiveBlock>(&inputf))
+      while (readFileBlock<PrimitiveBlock>(&input))
 	{
 	  cerr << "Okey!";
 	}
