@@ -13,6 +13,9 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 
+#include <iostream>
+using namespace std;
+
 namespace {
 
 const ::google::protobuf::Descriptor* Blob_descriptor_ = NULL;
@@ -287,11 +290,19 @@ bool Blob::MergePartialFromCodedStream(
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+
+    int field = ::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag);
+
+
+    int type = ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag);
+    std::cerr << "read tag:" << tag << "  and field:" << field  << " of type "<< type << std::endl;    switch (field) {
       // optional bytes raw = 1;
       case 1: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+	
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+
+	  std::cerr << "going to read bytes:" << std::endl;
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_raw()));
         } else {
@@ -303,7 +314,7 @@ bool Blob::MergePartialFromCodedStream(
       
       // optional int32 raw_size = 2;
       case 2: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_raw_size:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
@@ -319,7 +330,7 @@ bool Blob::MergePartialFromCodedStream(
       
       // optional bytes zlib_data = 3;
       case 3: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_zlib_data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
@@ -333,7 +344,7 @@ bool Blob::MergePartialFromCodedStream(
       
       // optional bytes lzma_data = 4;
       case 4: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_lzma_data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
@@ -347,7 +358,7 @@ bool Blob::MergePartialFromCodedStream(
       
       // optional bytes bzip2_data = 5;
       case 5: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_bzip2_data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
@@ -361,10 +372,16 @@ bool Blob::MergePartialFromCodedStream(
       
       default: {
       handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+
+
+	
+        if (type ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
           return true;
         }
+
+	std::cerr << "PROBLEM:" << std::endl;
+
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
         break;

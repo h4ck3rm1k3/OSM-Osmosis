@@ -33,8 +33,8 @@ template <> void dumpData(Blob & Item)
       cout << "<Blob>" << endl;
       cout << "Byte Size " << Item.ByteSize() << endl;
       cout << "Raw " << Item.has_raw() << endl;
-      cout << "Raw " << Item.raw() << endl;
-      dumpDataP(Item.raw().c_str());
+      //      cout << "Raw " << Item.raw() << endl;
+      //      dumpDataP(Item.raw().c_str());
       cout << "RawSize " << Item.has_raw_size() << endl;
       cout << "ZlibData " << Item.has_zlib_data() << endl;
       cout << "LZMData " << Item.has_lzma_data() << endl;
@@ -261,17 +261,17 @@ template <class TContents> int readHeaderBlock(FileBlockHeader & Item, CodedInpu
     }
 
   cerr << "data size of the item is :"   << datasize << endl;
-  //input->PushLimit(datasize);
+  ::google::protobuf::io::CodedInputStream::Limit oldlimit=input->PushLimit(datasize); // now set the limit to 32
 
   if (!ItemBlob.ParseFromCodedStream(input)) 
     {
-      //  input->PopLimit(datasize); // we need to read past the first block
+      input->PopLimit(oldlimit); // we need to read past the first block
       cerr << "Failed to parse file with Blob" << endl;    
       return 0;
     }
   else
     {
-      //      input->PopLimit(datasize); // we need to read past the first block
+      input->PopLimit(oldlimit); // we need to read past the first block
       //      input->PopLimit(datasize);
       cerr << " parse file OK Blob." << endl;
       dumpData(ItemBlob);      
@@ -328,8 +328,7 @@ template <class T> int readFileBlock(CodedInputStream * input)
   input->ReadLittleEndian32(&magic_number_);
   uint32_t  magic_number = ntohl(magic_number_);
   cerr << "magic_number " << magic_number << endl;
-  
-  input->PushLimit(magic_number);
+  ::google::protobuf::io::CodedInputStream::Limit oldlimit=input->PushLimit(magic_number);
   int status =0;
   
   if (!Item.ParseFromCodedStream(input)) 
@@ -339,9 +338,9 @@ template <class T> int readFileBlock(CodedInputStream * input)
   else
     {
       cerr << "Read Header" << endl;
-
+      input->PopLimit(oldlimit); // we need to read past the first block
       status = readHeaderBlock<T>(Item, input);
-      //      input->PopLimit(magic_number); // we need to read past the first block
+      
     }	  
 
 
