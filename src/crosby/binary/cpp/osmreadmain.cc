@@ -318,20 +318,27 @@ template <class TContents> int readHeaderBlock(FileBlockHeader & Item, CodedInpu
 template <class T> int readFileBlock(ifstream * inputf)
 {
   FileBlockHeader Item; 
-  int magic_number_=-1;
-  cerr << "readFileBlock at position:"  << inputf->tellg() << endl;
-  inputf->read(reinterpret_cast < char * > (&magic_number_),4);
-  uint32_t  magic_number = ntohl(magic_number_);
+  google::protobuf::uint32 magic_number_=-1;
 
   if (inputf)
     {
-      cerr << "magic_number " << magic_number << endl;
+
       cerr << "readFileBlock2 at position:" << inputf->tellg() << endl;
       
       IstreamInputStream raw_input(inputf);
       cerr << "readFileBlock3 at position:" << inputf->tellg() << endl;
       cerr << "read : "<< raw_input.ByteCount() << endl;
       CodedInputStream input(&raw_input);// this reads a big buffer in
+
+      cerr << "readFileBlock at position:"  << inputf->tellg() << endl;
+      //  inputf->read(reinterpret_cast < char * > (&magic_number_),4);
+      
+      input.ReadLittleEndian32(&magic_number_);
+      uint32_t  magic_number = ntohl(magic_number_);
+      //input.ReadVarint32(&magic_number);
+      //
+      cerr << "magic_number " << magic_number << endl;
+      
       input.PushLimit(magic_number);
       cerr << "read : "<< raw_input.ByteCount() << endl;
       cerr << "readFileBlock4 at position:" << inputf->tellg() << endl;
